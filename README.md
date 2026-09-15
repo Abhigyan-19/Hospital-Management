@@ -1326,7 +1326,7 @@ This gives us better control over how data is accessed and modified.
 
 ---
 
-# 👨‍⚕️ Complete Layer Relationship
+#  Complete Layer Relationship
 
 The four main layers work together:
 
@@ -1362,7 +1362,7 @@ The four main layers work together:
 
 ---
 
-# 🔄 Complete Example: Creating a Patient
+#  Complete Example: Creating a Patient
 
 Suppose Postman sends:
 
@@ -1466,7 +1466,7 @@ Example:
 
 ---
 
-# 🧠 Responsibilities at a Glance
+#  Responsibilities at a Glance
 
 | Layer      | Main Responsibility  | Example           |
 | ---------- | -------------------- | ----------------- |
@@ -1477,7 +1477,7 @@ Example:
 
 ---
 
-# 🚫 What Each Layer Should Avoid
+#  What Each Layer Should Avoid
 
 ## Controller
 
@@ -1528,19 +1528,7 @@ It should not become a place for handling HTTP requests.
 
 ---
 
-# 🎯 Easy Way to Remember the Layers
 
-Think about a hospital.
-
-```text
-Patient
-   ↓
-Receptionist
-   ↓
-Doctor/Administrator
-   ↓
-Database Clerk
-```
 
 In our application:
 
