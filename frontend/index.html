@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hospital Management System</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand-icon">H</div>
+          <div>
+            <p class="brand-label">Hospital</p>
+            <h1>Management System</h1>
+          </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#patients">Patients</a>
+          <a href="#doctors">Doctors</a>
+        </nav>
+      </header>
+
+      <main>
+        <section id="dashboard" class="panel dashboard-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Overview</p>
+              <h2>Dashboard</h2>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card accent-blue">
+              <p class="stat-label">Total Patients</p>
+              <h3 id="total-patients">0</h3>
+            </article>
+
+            <article class="stat-card accent-green">
+              <p class="stat-label">Total Doctors</p>
+              <h3 id="total-doctors">0</h3>
+            </article>
+          </div>
+        </section>
+
+        <div id="app-message" class="status-message" aria-live="polite"></div>
+
+        <section id="patients" class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Patient Records</p>
+              <h2>Patients</h2>
+            </div>
+          </div>
+
+          <div class="content-grid">
+            <div class="form-card">
+              <h3>Add Patient</h3>
+              <form id="patient-form" novalidate>
+                <div class="field-group">
+                  <label for="patient-name">Name</label>
+                  <input id="patient-name" name="name" type="text" placeholder="Enter patient name" />
+                </div>
+
+                <div class="field-row two-columns">
+                  <div class="field-group">
+                    <label for="patient-age">Age</label>
+                    <input id="patient-age" name="age" type="number" min="1" placeholder="Age" />
+                  </div>
+
+                  <div class="field-group">
+                    <label for="patient-gender">Gender</label>
+                    <input id="patient-gender" name="gender" type="text" placeholder="Male/Female/Other" />
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label for="patient-phone">Phone</label>
+                  <input id="patient-phone" name="phone" type="tel" placeholder="Enter phone number" />
+                </div>
+
+                <button type="submit" class="primary-btn">Add Patient</button>
+              </form>
+            </div>
+
+            <div class="table-card">
+              <div class="table-tools">
+                <h3>Patient List</h3>
+                <input id="patient-search" type="search" placeholder="Search patients..." aria-label="Search patients" />
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Age</th>
+                      <th>Gender</th>
+                      <th>Phone</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="patient-table-body"></tbody>
+                </table>
+                <p id="patient-empty-state" class="empty-state hidden">No patients found.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="doctors" class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Doctor Records</p>
+              <h2>Doctors</h2>
+            </div>
+          </div>
+
+          <div class="content-grid">
+            <div class="form-card">
+              <h3>Add Doctor</h3>
+              <form id="doctor-form" novalidate>
+                <div class="field-group">
+                  <label for="doctor-name">Name</label>
+                  <input id="doctor-name" name="name" type="text" placeholder="Enter doctor name" />
+                </div>
+
+                <div class="field-group">
+                  <label for="doctor-specialization">Specialization</label>
+                  <input id="doctor-specialization" name="specialization" type="text" placeholder="Cardiology" />
+                </div>
+
+                <div class="field-group">
+                  <label for="doctor-experience">Experience (years)</label>
+                  <input id="doctor-experience" name="experience" type="number" min="0" placeholder="Experience" />
+                </div>
+
+                <button type="submit" class="primary-btn">Add Doctor</button>
+              </form>
+            </div>
+
+            <div class="table-card">
+              <div class="table-tools">
+                <h3>Doctor List</h3>
+                <input id="doctor-search" type="search" placeholder="Search doctors..." aria-label="Search doctors" />
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Specialization</th>
+                      <th>Experience</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="doctor-table-body"></tbody>
+                </table>
+                <p id="doctor-empty-state" class="empty-state hidden">No doctors found.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="detail-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modal-title">Details</h3>
+          <button type="button" id="close-modal" class="close-btn" aria-label="Close details">×</button>
+        </div>
+        <div id="detail-content" class="detail-content"></div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
