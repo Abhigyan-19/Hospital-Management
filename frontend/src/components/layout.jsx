@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, ChevronDown, ClipboardList, LayoutDashboard, Menu, Settings, Stethoscope, Users, X } from 'lucide-react';
+import { Bell, CalendarDays, ChevronDown, ClipboardList, FileText, LayoutDashboard, Menu, Settings, Stethoscope, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,8 @@ const links = [
   { label: 'Patients', to: '/patients', icon: Users },
   { label: 'Doctors & Staff', to: '/doctors', icon: Stethoscope },
   { label: 'Appointments', to: '/appointments', icon: CalendarDays },
+  { label: 'Departments', to: '/departments', icon: ClipboardList },
+  { label: 'Prescriptions', to: '/prescriptions', icon: FileText },
   { label: 'Reports & Analytics', to: '/reports', icon: ClipboardList },
 ];
 
