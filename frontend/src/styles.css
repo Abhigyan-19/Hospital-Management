@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { font-family: 'Nunito Sans', sans-serif; color: #14343b; background: #f4f8fa; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; font-size: 17px; }
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid #f0ad4e; outline-offset: 3px; }
+.surface-pattern { background-color: #f4f8fa; background-image: linear-gradient(135deg, rgba(23,156,145,.035) 25%, transparent 25%), linear-gradient(315deg, rgba(57,125,158,.025) 25%, transparent 25%); background-position: 0 0, 24px 24px; background-size: 48px 48px; }
