@@ -3,13 +3,15 @@ import { useAuth } from "./context/AuthContext";
 import { AppLayout } from "./components/layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import ComingSoon from "./pages/ComingSoon";
 import Landing from "./pages/Landing";
 import Patients from "./pages/Patients";
 import Doctors from "./pages/Doctors";
 import Appointments from "./pages/Appointments";
 import Departments from "./pages/Departments";
 import Prescriptions from "./pages/Prescriptions";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Operations from "./pages/Operations";
 
 export function ProtectedRoute({ roles }) {
   const { user } = useAuth();
@@ -44,24 +46,11 @@ export default function AppRoutes() {
         />
         <Route path="/departments" element={<Departments />} />
         <Route path="/prescriptions" element={<Prescriptions />} />
-        <Route
-          path="/reports"
-          element={
-            <ComingSoon
-              title="Reports & Analytics"
-              description="Reporting and data exports are coming in Phase 6."
-            />
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ComingSoon
-              title="Profile settings"
-              description="Profile and password settings are planned for the application phase."
-            />
-          }
-        />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/billing" element={<Operations type="billing" />} />
+        <Route path="/beds" element={<Operations type="beds" />} />
+        <Route path="/labs" element={<Operations type="labs" />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

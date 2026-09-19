@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, ChevronDown, ClipboardList, FileText, LayoutDashboard, Menu, Settings, Stethoscope, Users, X } from 'lucide-react';
+import { Bell, CalendarDays, ChevronDown, ClipboardList, FileText, LayoutDashboard, Menu, Settings, Stethoscope, Users, X, BedDouble, FlaskConical, ReceiptText } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,9 @@ const links = [
   { label: 'Departments', to: '/departments', icon: ClipboardList },
   { label: 'Prescriptions', to: '/prescriptions', icon: FileText },
   { label: 'Reports & Analytics', to: '/reports', icon: ClipboardList },
+  { label: 'Billing & Invoices', to: '/billing', icon: ReceiptText },
+  { label: 'Beds & Wards', to: '/beds', icon: BedDouble },
+  { label: 'Lab Tests', to: '/labs', icon: FlaskConical },
 ];
 
 export function Sidebar({ open, onClose }) {
