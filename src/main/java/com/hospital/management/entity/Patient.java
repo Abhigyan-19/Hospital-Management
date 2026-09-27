@@ -12,7 +12,7 @@ import jakarta.persistence.Id;
 // it helps java opjects interact with relational databases.
 @Entity
 public class Patient {
-// this tekks JPA : treat the Patient class as a persistent entity that can be stored in the database.
+// this takes JPA : treat the Patient class as a persistent entity that can be stored in the database.
 // A class is not automatically a database table...
 // the @Entity annotation tells JPA to manage it as one.
 
@@ -28,7 +28,7 @@ public class Patient {
 
     private String phone;
 
-    public Patient() { // no argument constructor... it creates a Patient Objext without requiring any values.
+    public Patient() { // no argument constructor... it creates a Patient Object without requiring any values.
     }
 // This constructor allows us to create a patient with values.
     public Patient(String name, int age, String gender, String phone) {
