@@ -36,17 +36,17 @@ public class AppointmentService {
     // Create appointment
     public Appointment createAppointment(AppointmentRequest request) {
 
-        // Find the patient
+        // Find patient
         Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() ->
                         new RuntimeException("Patient not found"));
 
-        // Find the doctor
+        // Find doctor
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() ->
                         new RuntimeException("Doctor not found"));
 
-        // Check whether the doctor's slot is already booked
+        // Check whether the doctor is already booked
         boolean slotBooked =
                 appointmentRepository.existsByDoctorIdAndDateAndTimeAndStatusNot(
                         request.getDoctorId(),
@@ -61,7 +61,7 @@ public class AppointmentService {
             );
         }
 
-        // Create appointment
+        // New appointments start with Scheduled status
         Appointment appointment = new Appointment(
                 patient,
                 doctor,
@@ -80,7 +80,32 @@ public class AppointmentService {
                 .orElseThrow(() ->
                         new RuntimeException("Appointment not found"));
 
-        appointment.setStatus(status);
+        String normalizedStatus = status.trim().toLowerCase();
+
+        switch (normalizedStatus) {
+
+            case "scheduled":
+                appointment.setStatus("Scheduled");
+                break;
+
+            case "confirmed":
+                appointment.setStatus("Confirmed");
+                break;
+
+            case "cancelled":
+                appointment.setStatus("Cancelled");
+                break;
+
+            case "completed":
+                appointment.setStatus("Completed");
+                break;
+
+            default:
+                throw new RuntimeException(
+                        "Invalid appointment status. " +
+                                "Allowed values: Scheduled, Confirmed, Cancelled, Completed"
+                );
+        }
 
         return appointmentRepository.save(appointment);
     }
