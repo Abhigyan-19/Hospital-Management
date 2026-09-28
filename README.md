@@ -1,145 +1,150 @@
-#  Hospital Management System
+# Hospital Management System
 
-A beginner-friendly **Hospital Management System REST API** built using **Java, Spring Boot, Spring Data JPA, Hibernate, and H2 Database**.
+A RESTful Hospital Management System backend developed using Java, Spring Boot, Spring Data JPA, Hibernate, and H2 Database.
 
-The main purpose of this project is not only to build a hospital API, but also to understand how a **Spring Boot backend application works internally**, starting from the HTTP request and going all the way to the database.
+The purpose of this project is to understand the fundamentals of Spring Boot backend development and the complete flow of a REST API, from receiving an HTTP request to interacting with the database.
 
----
+The application currently manages:
 
-#  Table of Contents
+* Patients
+* Doctors
+* Appointments
 
-1. [Project Overview](#-project-overview)
-2. [Project Goals](#-project-goals)
-3. [Technologies Used](#-technologies-used)
-4. [Prerequisites](#-prerequisites)
-5. [Project Structure](#-project-structure)
-6. [Architecture](#-architecture)
-7. [Understanding the Request Flow](#-understanding-the-request-flow)
-8. [Maven](#-maven)
-9. [pom.xml Explained](#-pomxml-explained)
-10. [Spring Boot Application](#-spring-boot-application)
-11. [Entity Layer](#-entity-layer)
-12. [Patient Entity](#-patient-entity)
-13. [Doctor Entity](#-doctor-entity)
-14. [Repository Layer](#-repository-layer)
-15. [Why Repository is an Interface](#-why-repository-is-an-interface)
-16. [Patient Repository](#-patient-repository)
-17. [Doctor Repository](#-doctor-repository)
-18. [Service Layer](#-service-layer)
-19. [Patient Service](#-patient-service)
-20. [Doctor Service](#-doctor-service)
-21. [Controller Layer](#-controller-layer)
-22. [Patient Controller](#-patient-controller)
-23. [Doctor Controller](#-doctor-controller)
-24. [Important Spring Annotations](#-important-spring-annotations)
-25. [Dependency Injection](#-dependency-injection)
-26. [JPA and Hibernate](#-jpa-and-hibernate)
-27. [REST API](#-rest-api)
-28. [Patient APIs](#-patient-apis)
-29. [Doctor APIs](#-doctor-apis)
-30. [Testing APIs](#-testing-apis)
-31. [Running the Project](#-running-the-project)
-32. [Common Maven Commands](#-common-maven-commands)
-33. [Git and GitHub](#-git-and-github)
-34. [Gitignore](#-gitignore)
-35. [What I Have Learned](#-what-i-have-learned)
-36. [Future Improvements](#-future-improvements)
+The backend follows a layered architecture consisting of Controllers, Services, Repositories, Entities, and Data Transfer Objects (DTOs).
 
 ---
 
-#  Project Overview
+## Table of Contents
 
-The **Hospital Management System** is a backend REST API that allows us to manage:
-
-- Patients
-- Doctors
-
-Currently, the application supports basic CRUD operations.
-
-CRUD means:
-
-| Operation | Meaning | HTTP Method |
-|---|---|---|
-| Create | Add new data | POST |
-| Read | Get data | GET |
-| Update | Modify data | PUT/PATCH |
-| Delete | Remove data | DELETE |
-
-At the current stage, the project supports:
-
-- Create Patient
-- Get all Patients
-- Get Patient by ID
-- Delete Patient
-- Create Doctor
-- Get all Doctors
-- Get Doctor by ID
-- Delete Doctor
-
----
-
-#  Project Goals
-
-The main goal of this project is to understand the fundamentals of **Spring Boot backend development**.
-
-Through this project, I am learning:
-
-- Java backend development
-- Spring Boot
-- REST APIs
-- HTTP methods
-- Controllers
-- Services
-- Repositories
-- Interfaces
-- Dependency Injection
-- JPA
-- Hibernate
-- Entities
-- H2 Database
-- Maven
-- Project structure
-- Postman API testing
-- Git
-- GitHub
-
-The project is intentionally kept simple so that every layer can be understood properly.
+1. [Project Overview](#project-overview)
+2. [Project Goals](#project-goals)
+3. [Technologies Used](#technologies-used)
+4. [Prerequisites](#prerequisites)
+5. [Project Structure](#project-structure)
+6. [Application Architecture](#application-architecture)
+7. [Request Flow](#request-flow)
+8. [Spring Boot Application](#spring-boot-application)
+9. [Entity Layer](#entity-layer)
+10. [Patient Entity](#patient-entity)
+11. [Doctor Entity](#doctor-entity)
+12. [Appointment Entity](#appointment-entity)
+13. [Entity Relationships](#entity-relationships)
+14. [Repository Layer](#repository-layer)
+15. [Patient Repository](#patient-repository)
+16. [Doctor Repository](#doctor-repository)
+17. [Appointment Repository](#appointment-repository)
+18. [DTO Layer](#dto-layer)
+19. [Appointment Request DTO](#appointment-request-dto)
+20. [Service Layer](#service-layer)
+21. [Patient Service](#patient-service)
+22. [Doctor Service](#doctor-service)
+23. [Appointment Service](#appointment-service)
+24. [Controller Layer](#controller-layer)
+25. [Patient Controller](#patient-controller)
+26. [Doctor Controller](#doctor-controller)
+27. [Appointment Controller](#appointment-controller)
+28. [Appointment Booking Logic](#appointment-booking-logic)
+29. [Appointment Status](#appointment-status)
+30. [Important Spring Annotations](#important-spring-annotations)
+31. [Dependency Injection](#dependency-injection)
+32. [JPA and Hibernate](#jpa-and-hibernate)
+33. [REST API](#rest-api)
+34. [Patient APIs](#patient-apis)
+35. [Doctor APIs](#doctor-apis)
+36. [Appointment APIs](#appointment-apis)
+37. [API Testing](#api-testing)
+38. [Running the Backend](#running-the-backend)
+39. [Frontend Integration](#frontend-integration)
+40. [Maven Commands](#maven-commands)
+41. [Git and GitHub](#git-and-github)
+42. [Gitignore](#gitignore)
+43. [Current Learning Outcomes](#current-learning-outcomes)
+44. [Future Improvements](#future-improvements)
 
 ---
 
-#  Technologies Used
+# Project Overview
 
-| Technology | Purpose |
-|---|---|
-| Java 21 | Programming language |
-| Spring Boot 3.2.5 | Backend framework |
-| Spring Web | Creating REST APIs |
-| Spring Data JPA | Database operations |
-| Hibernate | ORM implementation |
-| H2 Database | Database |
-| Maven | Build and dependency management |
-| IntelliJ IDEA | IDE |
-| Postman | API testing |
-| Git | Version control |
-| GitHub | Code hosting |
+The Hospital Management System is a Spring Boot REST API that provides backend functionality for managing patients, doctors, and appointments.
+
+The application exposes REST endpoints that can be consumed by:
+
+* Frontend applications
+* Postman
+* Mobile applications
+* Other backend services
+
+The current backend provides CRUD functionality for patients and doctors, along with appointment creation, appointment retrieval, and appointment status management.
 
 ---
 
-#  Prerequisites
+# Project Goals
 
-Before running this project, install:
+The main objective of this project is to understand how a Spring Boot backend is structured and how its different components work together.
 
-1. Java JDK 21
-2. Maven
-3. IntelliJ IDEA or another Java IDE
-4. Git
-5. Postman (optional, but recommended)
+The project covers:
+
+* Java backend development
+* Spring Boot
+* REST API development
+* HTTP methods
+* Layered architecture
+* Controllers
+* Services
+* Repositories
+* Dependency Injection
+* Spring Data JPA
+* Hibernate
+* Entity relationships
+* Data Transfer Objects
+* H2 Database
+* Maven
+* Postman API testing
+* Git and GitHub
+* Frontend-backend communication
+* CORS
+
+The project is intentionally structured so that each layer has a clearly defined responsibility.
 
 ---
 
-#  Project Structure
+# Technologies Used
 
-The current project structure is:
+| Technology        | Purpose                                         |
+| ----------------- | ----------------------------------------------- |
+| Java 21           | Programming language                            |
+| Spring Boot 3.2.5 | Backend framework                               |
+| Spring Web        | REST API development                            |
+| Spring Data JPA   | Database access                                 |
+| Hibernate         | ORM implementation                              |
+| H2 Database       | Relational database                             |
+| Maven             | Build and dependency management                 |
+| IntelliJ IDEA     | Development environment                         |
+| Postman           | API testing                                     |
+| Git               | Version control                                 |
+| GitHub            | Source code hosting                             |
+| React / Vite      | Frontend integration                            |
+| Axios             | HTTP communication between frontend and backend |
+
+---
+
+# Prerequisites
+
+Before running the backend, make sure the following are installed:
+
+* Java JDK 21
+* Maven
+* Git
+* IntelliJ IDEA or another Java IDE
+* Postman for API testing
+
+If the frontend is also being run locally, Node.js and npm are required.
+
+---
+
+# Project Structure
+
+The current backend structure is:
 
 ```text
 hospital_management
@@ -148,7 +153,6 @@ hospital_management
 ├── pom.xml
 │
 ├── .idea/
-│
 ├── .mvn/
 │
 └── src/
@@ -165,706 +169,366 @@ hospital_management
     │   │               │
     │   │               ├── controller/
     │   │               │   ├── PatientController.java
-    │   │               │   └── DoctorController.java
+    │   │               │   ├── DoctorController.java
+    │   │               │   └── AppointmentController.java
+    │   │               │
+    │   │               ├── dto/
+    │   │               │   └── AppointmentRequest.java
     │   │               │
     │   │               ├── entity/
     │   │               │   ├── Patient.java
-    │   │               │   └── Doctor.java
+    │   │               │   ├── Doctor.java
+    │   │               │   └── Appointment.java
     │   │               │
     │   │               ├── repository/
     │   │               │   ├── PatientRepository.java
-    │   │               │   └── DoctorRepository.java
+    │   │               │   ├── DoctorRepository.java
+    │   │               │   └── AppointmentRepository.java
     │   │               │
     │   │               └── service/
     │   │                   ├── PatientService.java
-    │   │                   └── DoctorService.java
+    │   │                   ├── DoctorService.java
+    │   │                   └── AppointmentService.java
     │   │
     │   └── resources/
     │
     └── test/
-
-
-
- 
-
-
-
-
-
-#  Layers of the Hospital Management System
-
-The application follows a **Layered Architecture**. Each layer has a specific responsibility.
-
-The main layers are:
-
-```text
-┌──────────────────────────┐
-│       Controller         │
-│   Handles HTTP Requests  │
-└────────────┬─────────────┘
-             │
-             ↓
-┌──────────────────────────┐
-│         Service          │
-│    Business Logic        │
-└────────────┬─────────────┘
-             │
-             ↓
-┌──────────────────────────┐
-│       Repository         │
-│     Database Access      │
-└────────────┬─────────────┘
-             │
-             ↓
-┌──────────────────────────┐
-│       Entity / Model     │
-│    Represents Data       │
-└──────────────────────────┘
 ```
 
 ---
 
-# 1.  Controller Layer
+# Application Architecture
 
-## What is the Controller Layer?
-
-The **Controller Layer** is the entry point of our backend application.
-
-It receives requests from clients such as:
-
-* Postman
-* Frontend applications
-* Mobile applications
-* Web browsers
-* Other backend services
-
-The controller determines **which operation needs to be performed** and passes the request to the appropriate service.
-
----
-
-## Location
-
-```text
-src/main/java/com/hospital/management/controller/
-```
-
-Current controllers:
-
-```text
-controller/
-│
-├── PatientController.java
-└── DoctorController.java
-```
-
----
-
-## Main Responsibility
-
-The Controller Layer is responsible for:
-
-* Receiving HTTP requests
-* Defining API endpoints
-* Reading request data
-* Reading path variables
-* Calling the Service Layer
-* Returning responses to the client
-
-The controller should generally **not contain business logic or database logic**.
-
----
-
-## Example
-
-```java
-@RestController
-@RequestMapping("/patients")
-public class PatientController {
-```
-
-This creates a REST controller whose base URL is:
-
-```text
-/patients
-```
-
-Therefore, if we write:
-
-```java
-@GetMapping
-```
-
-the endpoint becomes:
-
-```text
-GET /patients
-```
-
----
-
-## Controller Request Flow
-
-Suppose the client sends:
-
-```text
-GET /patients
-```
-
-The flow is:
+The backend follows a layered architecture.
 
 ```text
 Client
-   ↓
-PatientController
-   ↓
-PatientService
+  |
+  v
+Controller
+  |
+  v
+Service
+  |
+  v
+Repository
+  |
+  v
+JPA / Hibernate
+  |
+  v
+Database
 ```
 
-The controller receives the request and asks the service to retrieve the patients.
+Each layer has a specific responsibility.
+
+| Layer      | Responsibility                                           |
+| ---------- | -------------------------------------------------------- |
+| Controller | Handles HTTP requests and responses                      |
+| Service    | Contains application and business logic                  |
+| Repository | Provides database access                                 |
+| Entity     | Represents persistent application data                   |
+| DTO        | Transfers structured data between client and application |
+
+This separation prevents different responsibilities from being mixed together.
 
 ---
 
-## Important Controller Annotations
+# Request Flow
 
-### `@RestController`
+Consider an appointment creation request:
 
-```java
-@RestController
+```http
+POST /appointments
 ```
 
-Tells Spring that the class is a REST controller.
-
-It allows methods inside the class to handle HTTP requests and return data, commonly as JSON.
-
----
-
-### `@RequestMapping`
-
-```java
-@RequestMapping("/patients")
-```
-
-Defines the base URL for the controller.
-
-For example:
-
-```text
-@RequestMapping("/patients")
-        +
-@GetMapping
-        =
-GET /patients
-```
-
----
-
-### `@PostMapping`
-
-```java
-@PostMapping
-```
-
-Handles HTTP POST requests.
-
-Used when creating a new patient or doctor.
-
-Example:
-
-```text
-POST /patients
-```
-
----
-
-### `@GetMapping`
-
-```java
-@GetMapping
-```
-
-Handles HTTP GET requests.
-
-Used to retrieve data.
-
-Example:
-
-```text
-GET /patients
-```
-
----
-
-### `@GetMapping("/{id}")`
-
-```java
-@GetMapping("/{id}")
-```
-
-Handles requests containing an ID.
-
-Example:
-
-```text
-GET /patients/5
-```
-
-Here:
-
-```text
-5
-```
-
-is the patient's ID.
-
----
-
-### `@DeleteMapping`
-
-```java
-@DeleteMapping("/{id}")
-```
-
-Handles DELETE requests.
-
-Example:
-
-```text
-DELETE /patients/5
-```
-
-This requests deletion of patient ID 5.
-
----
-
-### `@RequestBody`
-
-```java
-@RequestBody Patient patient
-```
-
-Converts JSON request data into a Java object.
-
-For example, the client sends:
+The client sends appointment information containing:
 
 ```json
 {
-    "name": "Rahul",
-    "age": 25,
-    "disease": "Fever"
+    "patientId": 1,
+    "doctorId": 1,
+    "date": "YYYY-MM-DD",
+    "time": "HH:MM"
 }
 ```
 
-Spring converts this JSON into:
+The request flows through the application as follows:
 
 ```text
-Patient object
-```
-
-which can then be passed to the service.
-
----
-
-### `@PathVariable`
-
-```java
-@PathVariable Long id
-```
-
-Gets a value from the URL.
-
-For:
-
-```text
-GET /patients/10
-```
-
-Spring extracts:
-
-```text
-id = 10
-```
-
----
-
-## Example Controller
-
-```java
-@RestController
-@RequestMapping("/patients")
-public class PatientController {
-
-    private final PatientService patientService;
-
-    public PatientController(PatientService patientService) {
-        this.patientService = patientService;
-    }
-
-    @PostMapping
-    public Patient createPatient(@RequestBody Patient patient) {
-        return patientService.createPatient(patient);
-    }
-
-    @GetMapping
-    public List<Patient> getAllPatients() {
-        return patientService.getAllPatients();
-    }
-
-    @GetMapping("/{id}")
-    public Patient getPatientById(@PathVariable Long id) {
-        return patientService.getPatientById(id);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deletePatient(@PathVariable Long id) {
-        patientService.deletePatient(id);
-    }
-}
-```
-
----
-
-## What the Controller Should NOT Do
-
-The controller should not normally contain code such as:
-
-```java
-// Database code
-patientRepository.findAll();
-```
-
-or complicated business rules such as:
-
-```java
-// Complex business logic
-if (patient.getAge() > 60 && ...) {
-    ...
-}
-```
-
-Instead:
-
-```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-```
-
----
-
-# 2.  Service Layer
-
-## What is the Service Layer?
-
-The **Service Layer** contains the application's **business logic**.
-
-It sits between the Controller and Repository.
-
-```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-```
-
-The Controller receives the request, but the Service decides **what should actually happen**.
-
----
-
-## Location
-
-```text
-src/main/java/com/hospital/management/service/
-```
-
-Current services:
-
-```text
-service/
-│
-├── PatientService.java
-└── DoctorService.java
-```
-
----
-
-## Main Responsibility
-
-The Service Layer is responsible for:
-
-* Implementing business logic
-* Processing data
-* Applying business rules
-* Calling repositories
-* Coordinating multiple repositories if necessary
-* Returning processed results to controllers
-
----
-
-## Why Do We Need a Service Layer?
-
-We could technically do this:
-
-```text
-Controller → Repository
-```
-
-But this becomes problematic when the application becomes larger.
-
-For example:
-
-```text
-Controller
-    ↓
-Repository
-```
-
-would force the controller to handle:
-
-* HTTP requests
-* Business logic
-* Database operations
-* Validation
-* Calculations
-
-Instead, we separate responsibilities:
-
-```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-```
-
-This makes the code cleaner and easier to maintain.
-
----
-
-## `@Service`
-
-```java
-@Service
-```
-
-This tells Spring:
-
-> This class is a Service component and should be managed by the Spring container.
-
-Spring creates and manages an object of this class.
-
----
-
-## Dependency Injection in Service
-
-```java
-private final PatientRepository patientRepository;
-```
-
-The `PatientService` needs `PatientRepository`.
-
-Therefore, `PatientRepository` is a dependency of `PatientService`.
-
-The constructor receives it:
-
-```java
-public PatientService(PatientRepository patientRepository) {
-    this.patientRepository = patientRepository;
-}
-```
-
-Spring automatically provides the repository object.
-
-This is called:
-
-```text
-Constructor Dependency Injection
-```
-
----
-
-## Creating a Patient
-
-```java
-public Patient createPatient(Patient patient) {
-    return patientRepository.save(patient);
-}
-```
-
-The process is:
-
-```text
-PatientController
-       ↓
-PatientService
-       ↓
-patientRepository.save()
-       ↓
-Database
-```
-
-The Service receives the patient and asks the Repository to save it.
-
----
-
-## Getting All Patients
-
-```java
-public List<Patient> getAllPatients() {
-    return patientRepository.findAll();
-}
-```
-
-`findAll()` comes from `JpaRepository`.
-
-It retrieves all patient records.
-
-The return type is:
-
-```java
-List<Patient>
-```
-
-because multiple patients can exist.
-
----
-
-## Getting Patient By ID
-
-```java
-public Patient getPatientById(Long id) {
-    return patientRepository.findById(id)
-            .orElse(null);
-}
-```
-
-The repository searches for a patient using the ID.
-
-```java
-findById(id)
-```
-
-returns an `Optional<Patient>`.
-
-Then:
-
-```java
-.orElse(null)
-```
-
-means:
-
-```text
-If patient exists:
-    return patient
-
-If patient doesn't exist:
-    return null
-```
-
----
-
-## Deleting a Patient
-
-```java
-public void deletePatient(Long id) {
-    patientRepository.deleteById(id);
-}
-```
-
-The Service tells the Repository to delete the patient.
-
----
-
-## Example Service
-
-```java
-@Service
-public class PatientService {
-
-    private final PatientRepository patientRepository;
-
-    public PatientService(PatientRepository patientRepository) {
-        this.patientRepository = patientRepository;
-    }
-
-    public Patient createPatient(Patient patient) {
-        return patientRepository.save(patient);
-    }
-
-    public List<Patient> getAllPatients() {
-        return patientRepository.findAll();
-    }
-
-    public Patient getPatientById(Long id) {
-        return patientRepository.findById(id)
-                .orElse(null);
-    }
-
-    public void deletePatient(Long id) {
-        patientRepository.deleteById(id);
-    }
-}
-```
-
----
-
-# 3.  Repository Layer
-
-## What is the Repository Layer?
-
-The **Repository Layer** is responsible for communicating with the database.
-
-It provides methods for:
-
-* Saving data
-* Retrieving data
-* Searching by ID
-* Deleting data
-* Updating data
-
-In this project, we use **Spring Data JPA**.
-
----
-
-## Location
-
-```text
-src/main/java/com/hospital/management/repository/
-```
-
-Current repositories:
-
-```text
-repository/
-│
-├── PatientRepository.java
-└── DoctorRepository.java
-```
-
----
-
-## Main Responsibility
-
-The Repository Layer handles:
-
-```text
-Java Objects
-      ↓
+Client
+  |
+  v
+AppointmentController
+  |
+  v
+AppointmentRequest
+  |
+  v
+AppointmentService
+  |
+  +----> PatientRepository
+  |
+  +----> DoctorRepository
+  |
+  +----> AppointmentRepository
+  |
+  v
 JPA / Hibernate
-      ↓
+  |
+  v
+H2 Database
+```
+
+The response then travels back through the application:
+
+```text
+Database
+  |
+  v
+Repository
+  |
+  v
+Service
+  |
+  v
+Controller
+  |
+  v
+HTTP Response
+```
+
+---
+
+# Spring Boot Application
+
+The main application class is:
+
+```text
+HospitalManagementApplication.java
+```
+
+A Spring Boot application starts through:
+
+```java
+@SpringBootApplication
+public class HospitalManagementApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(
+                HospitalManagementApplication.class,
+                args
+        );
+    }
+}
+```
+
+`@SpringBootApplication` combines several Spring features, including configuration and component scanning.
+
+`SpringApplication.run()` starts the Spring application and creates the application context.
+
+---
+
+# Entity Layer
+
+The Entity Layer represents persistent data.
+
+The current entities are:
+
+```text
+Patient
+Doctor
+Appointment
+```
+
+Each entity is mapped to a database table using JPA annotations.
+
+---
+
+# Patient Entity
+
+The `Patient` entity represents a patient registered in the hospital system.
+
+Its current fields are:
+
+```text
+id
+name
+age
+gender
+phone
+```
+
+The entity uses:
+
+```java
+@Entity
+```
+
+to indicate that it is a JPA entity.
+
+The primary key is:
+
+```java
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
+```
+
+The database generates the ID automatically when a new patient is created.
+
+---
+
+# Doctor Entity
+
+The `Doctor` entity represents a doctor working in the hospital.
+
+Its current fields are:
+
+```text
+id
+name
+specialization
+experience
+```
+
+The doctor's specialization represents their medical department or area of practice.
+
+For example, a doctor's specialization may be:
+
+```text
+Cardiology
+Neurology
+Orthopedics
+```
+
+The actual values are stored in the database and are not hard-coded into the application.
+
+---
+
+# Appointment Entity
+
+The `Appointment` entity represents an appointment between a patient and a doctor.
+
+Its fields are:
+
+```text
+id
+patient
+doctor
+date
+time
+status
+```
+
+Unlike a simple string-based model, the appointment does not store patient and doctor names directly.
+
+Instead, it maintains relationships with the `Patient` and `Doctor` entities:
+
+```java
+@ManyToOne
+@JoinColumn(name = "patient_id", nullable = false)
+private Patient patient;
+```
+
+and:
+
+```java
+@ManyToOne
+@JoinColumn(name = "doctor_id", nullable = false)
+private Doctor doctor;
+```
+
+This allows an appointment to reference existing patient and doctor records using their database IDs.
+
+---
+
+# Entity Relationships
+
+The application currently has the following relationship:
+
+```text
+Patient 1 -------- * Appointment * -------- 1 Doctor
+```
+
+This means:
+
+* One patient can have multiple appointments.
+* One doctor can have multiple appointments.
+* Each appointment belongs to one patient.
+* Each appointment belongs to one doctor.
+
+The corresponding database structure can be represented conceptually as:
+
+```text
+patients
+---------
+id
+name
+age
+gender
+phone
+
+
+doctors
+-------
+id
+name
+specialization
+experience
+
+
+appointments
+------------
+id
+patient_id
+doctor_id
+date
+time
+status
+```
+
+`patient_id` and `doctor_id` act as references to the corresponding records.
+
+---
+
+# Repository Layer
+
+The Repository Layer is responsible for database access.
+
+The current repositories are:
+
+```text
+PatientRepository
+DoctorRepository
+AppointmentRepository
+```
+
+The general flow is:
+
+```text
+Service
+   |
+   v
+Repository
+   |
+   v
+Spring Data JPA
+   |
+   v
+Hibernate
+   |
+   v
 Database
 ```
 
-The Service does not need to know how SQL is written.
-
-It simply calls repository methods.
+The Service Layer does not need to manually write SQL for standard CRUD operations.
 
 ---
 
 # Patient Repository
+
+The Patient Repository is defined as:
 
 ```java
 public interface PatientRepository
@@ -872,140 +536,21 @@ public interface PatientRepository
 }
 ```
 
-This single interface gives us many database operations.
-
----
-
-# `interface`
-
-```java
-public interface PatientRepository
-```
-
-A repository is defined as an interface because Spring Data JPA automatically provides its implementation.
-
-We don't manually write the implementation class.
-
----
-
-# `JpaRepository`
-
-```java
-extends JpaRepository<Patient, Long>
-```
-
-`JpaRepository` is provided by Spring Data JPA.
-
-It provides many ready-made database methods.
-
-The first generic type:
+The generic parameters mean:
 
 ```text
-Patient
+Patient -> Entity type
+Long    -> Primary key type
 ```
 
-means the repository works with the `Patient` entity.
-
-The second:
-
-```text
-Long
-```
-
-means the entity's ID is of type `Long`.
-
-Therefore:
-
-```text
-JpaRepository<Patient, Long>
-
-Patient → Entity
-Long    → ID type
-```
-
----
-
-# Repository Methods
-
-Because `PatientRepository` extends `JpaRepository`, it automatically receives methods such as:
+By extending `JpaRepository`, the repository automatically provides methods such as:
 
 ```java
 save()
-```
-
-```java
 findAll()
-```
-
-```java
 findById()
-```
-
-```java
 deleteById()
 ```
-
-and many others.
-
----
-
-## `save()`
-
-```java
-patientRepository.save(patient);
-```
-
-Saves the patient into the database.
-
----
-
-## `findAll()`
-
-```java
-patientRepository.findAll();
-```
-
-Retrieves all patients.
-
----
-
-## `findById()`
-
-```java
-patientRepository.findById(id);
-```
-
-Searches for a patient by ID.
-
----
-
-## `deleteById()`
-
-```java
-patientRepository.deleteById(id);
-```
-
-Deletes a patient by ID.
-
----
-
-# Why Don't We Write SQL?
-
-Normally, database operations might involve SQL:
-
-```sql
-SELECT * FROM patient;
-```
-
-But Spring Data JPA allows us to write:
-
-```java
-patientRepository.findAll();
-```
-
-Spring Data JPA and Hibernate handle the database interaction.
-
-This is one of the main benefits of using Spring Data JPA.
 
 ---
 
@@ -1019,547 +564,1314 @@ public interface DoctorRepository
 }
 ```
 
-The difference is:
-
-```text
-PatientRepository
-        ↓
-Patient entity
-
-DoctorRepository
-        ↓
-Doctor entity
-```
+It provides standard database operations for the `Doctor` entity.
 
 ---
 
-# 4.  Entity Layer
+# Appointment Repository
 
-## What is the Entity Layer?
-
-The **Entity Layer** represents the data of the application.
-
-An Entity is a Java class that is mapped to a database table using JPA.
-
-For example:
+The Appointment Repository is:
 
 ```java
-@Entity
-public class Doctor {
-```
-
-means the `Doctor` class represents persistent database data.
-
----
-
-## Location
-
-```text
-src/main/java/com/hospital/management/entity/
-```
-
-Current entities:
-
-```text
-entity/
-│
-├── Patient.java
-└── Doctor.java
-```
-
----
-
-# `@Entity`
-
-```java
-@Entity
-```
-
-This tells JPA:
-
-> This Java class should be treated as a database entity.
-
-For example:
-
-```java
-@Entity
-public class Doctor
-```
-
-can represent a database table for doctors.
-
-Conceptually:
-
-```text
-Java
-
-Doctor
-----------------
-id
-name
-specialization
-experience
-
-
-Database
-
-doctor
---------------------------------
-id | name | specialization | experience
-```
-
----
-
-# Primary Key
-
-Inside the entity:
-
-```java
-@Id
-private Long id;
-```
-
-`@Id` tells JPA that this field is the **primary key**.
-
-A primary key uniquely identifies a database record.
-
-Example:
-
-```text
-id
----
-1
-2
-3
-4
-```
-
-Each doctor can have a unique ID.
-
----
-
-# Automatically Generated ID
-
-```java
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-```
-
-This tells JPA/database to generate the ID automatically.
-
-Therefore, while creating a doctor, we don't need to manually provide the ID.
-
-We can send:
-
-```json
-{
-    "name": "Dr. Sharma",
-    "specialization": "Cardiology",
-    "experience": 10
+public interface AppointmentRepository
+        extends JpaRepository<Appointment, Long> {
 }
 ```
 
-The database can generate:
-
-```text
-id = 1
-```
-
----
-
-# Entity Fields
-
-For the Doctor entity:
+In addition to standard CRUD operations, it contains a custom derived query method used to check doctor availability:
 
 ```java
-private Long id;
-
-private String name;
-private String specialization;
-private int experience;
-```
-
-These fields represent the doctor's data.
-
-Example:
-
-```text
-id             = 1
-name           = Dr. Sharma
-specialization = Cardiology
-experience     = 10
-```
-
----
-
-# Constructors
-
-The entity contains two constructors.
-
-## No-Argument Constructor
-
-```java
-public Doctor() {
-}
-```
-
-This creates an empty Doctor object.
-
-Hibernate/JPA requires a no-argument constructor to instantiate entity objects.
-
----
-
-## Parameterized Constructor
-
-```java
-public Doctor(
-        String name,
-        String specialization,
-        int experience
-) {
-    this.name = name;
-    this.specialization = specialization;
-    this.experience = experience;
-}
-```
-
-This allows us to create a Doctor object with values.
-
-Example:
-
-```java
-Doctor doctor = new Doctor(
-    "Dr. Sharma",
-    "Cardiology",
-    10
+boolean existsByDoctorIdAndDateAndTimeAndStatusNot(
+        Long doctorId,
+        String date,
+        String time,
+        String status
 );
 ```
 
+This checks whether an appointment already exists for a specific:
+
+```text
+Doctor
+Date
+Time
+```
+
+while excluding a specified status, which is currently used to exclude cancelled appointments.
+
 ---
 
-# Getters
+# Why Repository is an Interface
 
-Example:
+A repository is defined as an interface because Spring Data JPA provides the implementation automatically.
+
+For example:
 
 ```java
-public String getName() {
-    return name;
+public interface PatientRepository
+        extends JpaRepository<Patient, Long> {
 }
 ```
 
-A getter retrieves the value of a field.
-
-Example:
-
-```java
-doctor.getName();
-```
-
-returns:
+There is no need to manually create an implementation such as:
 
 ```text
-Dr. Sharma
+PatientRepositoryImpl
 ```
+
+for standard CRUD operations.
+
+Spring Data JPA generates the required implementation at runtime.
 
 ---
 
-# Setters
+# DTO Layer
 
-Example:
+DTO stands for:
+
+```text
+Data Transfer Object
+```
+
+A DTO is used to define the data transferred between the client and the application.
+
+The current project contains:
+
+```text
+dto/
+└── AppointmentRequest.java
+```
+
+The appointment request DTO separates the API input from the JPA entity.
+
+This is useful because the client should provide the IDs of the patient and doctor rather than constructing complete `Patient` and `Doctor` objects.
+
+---
+
+# Appointment Request DTO
+
+The `AppointmentRequest` contains:
 
 ```java
-public void setName(String name) {
-    this.name = name;
+private Long patientId;
+private Long doctorId;
+private String date;
+private String time;
+```
+
+The client therefore sends:
+
+```json
+{
+    "patientId": 1,
+    "doctorId": 1,
+    "date": "YYYY-MM-DD",
+    "time": "HH:MM"
 }
 ```
 
-A setter changes the value of a field.
+The backend then:
 
-Example:
+1. Finds the patient using `patientId`.
+2. Finds the doctor using `doctorId`.
+3. Checks the doctor's availability.
+4. Creates an `Appointment` entity.
+5. Sets the initial status to `Scheduled`.
+6. Saves the appointment.
 
-```java
-doctor.setName("Dr. Roy");
-```
-
-Now:
+The client does not directly provide:
 
 ```text
-name = Dr. Roy
+appointmentId
+patient object
+doctor object
+status
 ```
+
+These are handled by the backend.
 
 ---
 
-# Why Are Fields Private?
+# Service Layer
 
-The entity fields are declared:
+The Service Layer contains the application's business logic.
 
-```java
-private
+The current services are:
+
+```text
+PatientService
+DoctorService
+AppointmentService
+```
+
+The basic relationship is:
+
+```text
+Controller
+    |
+    v
+Service
+    |
+    v
+Repository
+```
+
+The Service Layer acts as the intermediate layer between HTTP requests and database operations.
+
+---
+
+# Patient Service
+
+`PatientService` handles operations related to patients.
+
+Current operations include:
+
+```text
+createPatient()
+getAllPatients()
+getPatientById()
+deletePatient()
 ```
 
 For example:
 
 ```java
-private String name;
+public Patient createPatient(Patient patient) {
+    return patientRepository.save(patient);
+}
 ```
 
-This is an example of **encapsulation**.
-
-Instead of allowing direct access:
-
-```java
-doctor.name
-```
-
-we use:
-
-```java
-doctor.getName();
-```
-
-and:
-
-```java
-doctor.setName(...);
-```
-
-This gives us better control over how data is accessed and modified.
+The service receives the patient object and delegates persistence to the repository.
 
 ---
 
-#  Complete Layer Relationship
+# Doctor Service
 
-The four main layers work together:
+`DoctorService` handles operations related to doctors.
+
+Current operations include:
 
 ```text
-┌─────────────────────────────┐
-│        CONTROLLER           │
-│                             │
-│ Receives HTTP Request       │
-│ Returns HTTP Response       │
-└──────────────┬──────────────┘
-               │
-               ↓
-┌─────────────────────────────┐
-│          SERVICE            │
-│                             │
-│ Business/Application Logic  │
-└──────────────┬──────────────┘
-               │
-               ↓
-┌─────────────────────────────┐
-│        REPOSITORY           │
-│                             │
-│ Database Access             │
-└──────────────┬──────────────┘
-               │
-               ↓
-┌─────────────────────────────┐
-│           ENTITY            │
-│                             │
-│ Represents Database Data    │
-└─────────────────────────────┘
+createDoctor()
+getAllDoctors()
+getDoctorById()
+deleteDoctor()
+```
+
+It uses:
+
+```text
+DoctorRepository
+```
+
+for database operations.
+
+---
+
+# Appointment Service
+
+`AppointmentService` contains the business logic required to create and manage appointments.
+
+Creating an appointment involves multiple repositories.
+
+The process is:
+
+```text
+AppointmentRequest
+       |
+       v
+Find Patient
+       |
+       v
+Find Doctor
+       |
+       v
+Check Doctor Availability
+       |
+       v
+Create Appointment
+       |
+       v
+Set Status = Scheduled
+       |
+       v
+Save Appointment
+```
+
+The service therefore coordinates:
+
+```text
+PatientRepository
+DoctorRepository
+AppointmentRepository
 ```
 
 ---
 
-#  Complete Example: Creating a Patient
+# Controller Layer
 
-Suppose Postman sends:
+The Controller Layer is responsible for handling HTTP requests.
+
+The current controllers are:
+
+```text
+PatientController
+DoctorController
+AppointmentController
+```
+
+Controllers define the public REST API of the application.
+
+They should primarily handle:
+
+* HTTP requests
+* Request data
+* Path variables
+* Request parameters
+* Calling services
+* Returning responses
+
+Business logic and direct database operations are kept outside the controller.
+
+---
+
+# Patient Controller
+
+The base endpoint is:
+
+```text
+/patients
+```
+
+Supported operations include:
+
+```text
+POST   /patients
+GET    /patients
+GET    /patients/{id}
+DELETE /patients/{id}
+```
+
+The controller delegates the actual operations to `PatientService`.
+
+---
+
+# Doctor Controller
+
+The base endpoint is:
+
+```text
+/doctors
+```
+
+Supported operations include:
+
+```text
+POST   /doctors
+GET    /doctors
+GET    /doctors/{id}
+DELETE /doctors/{id}
+```
+
+The controller delegates the operations to `DoctorService`.
+
+---
+
+# Appointment Controller
+
+The base endpoint is:
+
+```text
+/appointments
+```
+
+Supported operations include:
+
+```text
+GET  /appointments
+POST /appointments
+PUT  /appointments/{id}/status
+```
+
+The controller delegates appointment operations to `AppointmentService`.
+
+---
+
+# Appointment Booking Logic
+
+Appointment creation follows a defined business flow.
+
+The client sends:
 
 ```http
-POST /patients
+POST /appointments
 ```
 
 with:
 
 ```json
 {
-    "name": "Rahul",
-    "age": 25,
-    "disease": "Fever"
+    "patientId": 1,
+    "doctorId": 1,
+    "date": "YYYY-MM-DD",
+    "time": "HH:MM"
 }
 ```
 
-## Step 1 — Controller
+The backend first verifies that the referenced patient exists.
 
-The request reaches:
+It then verifies that the referenced doctor exists.
+
+After that, the backend checks whether the doctor already has an appointment at the requested date and time.
+
+The availability rule is:
+
+```text
+Same Doctor
++
+Same Date
++
+Same Time
+=
+Existing Appointment
+```
+
+If such an appointment exists and has not been cancelled, the new appointment is rejected.
+
+This allows different doctors to have appointments at the same time.
+
+For example:
+
+```text
+Doctor A -> 09:30 -> Booked
+Doctor B -> 09:30 -> Available
+```
+
+The booking restriction therefore applies to a specific doctor rather than globally to the time slot.
+
+---
+
+# Appointment Status
+
+New appointments are automatically created with:
+
+```text
+Scheduled
+```
+
+The current status values used by the application are:
+
+```text
+Scheduled
+Completed
+Cancelled
+```
+
+The status can be changed using:
+
+```http
+PUT /appointments/{id}/status
+```
+
+with the status supplied as a request parameter.
+
+For example:
+
+```text
+PUT /appointments/{id}/status?status=Completed
+```
+
+or:
+
+```text
+PUT /appointments/{id}/status?status=Cancelled
+```
+
+Cancelled appointments do not prevent the same doctor from being booked for that date and time again.
+
+---
+
+# Important Spring Annotations
+
+## `@SpringBootApplication`
+
+```java
+@SpringBootApplication
+```
+
+Marks the main Spring Boot application class.
+
+---
+
+## `@RestController`
+
+```java
+@RestController
+```
+
+Marks a class as a REST controller.
+
+---
+
+## `@RequestMapping`
+
+```java
+@RequestMapping("/patients")
+```
+
+Defines the base URL for a controller.
+
+---
+
+## `@GetMapping`
+
+```java
+@GetMapping
+```
+
+Handles HTTP GET requests.
+
+---
+
+## `@PostMapping`
 
 ```java
 @PostMapping
-public Patient createPatient(@RequestBody Patient patient)
 ```
 
-Spring converts the JSON into a `Patient` object.
+Handles HTTP POST requests.
 
 ---
 
-## Step 2 — Service
-
-The Controller calls:
+## `@PutMapping`
 
 ```java
-patientService.createPatient(patient);
+@PutMapping("/{id}/status")
 ```
 
-The Service receives the Patient.
+Handles HTTP PUT requests.
 
 ---
 
-## Step 3 — Repository
-
-The Service calls:
+## `@DeleteMapping`
 
 ```java
-patientRepository.save(patient);
+@DeleteMapping("/{id}")
 ```
 
----
-
-## Step 4 — JPA/Hibernate
-
-Spring Data JPA and Hibernate handle the persistence operation.
+Handles HTTP DELETE requests.
 
 ---
 
-## Step 5 — Database
+## `@RequestBody`
 
-The patient is stored in the database.
+```java
+@RequestBody AppointmentRequest request
+```
 
-Conceptually:
+Converts the JSON request body into a Java object.
+
+---
+
+## `@PathVariable`
+
+```java
+@PathVariable Long id
+```
+
+Extracts a value from the URL.
+
+For example:
 
 ```text
-Patient Table
+GET /patients/10
+```
 
-id | name  | age | disease
----------------------------
-1  | Rahul | 25  | Fever
+results in:
+
+```text
+id = 10
 ```
 
 ---
 
-## Step 6 — Response
+## `@RequestParam`
 
-The saved Patient travels back:
-
-```text
-Database
-    ↓
-Repository
-    ↓
-Service
-    ↓
-Controller
-    ↓
-JSON Response
+```java
+@RequestParam String status
 ```
 
-Example:
+Reads a value from the query parameters.
+
+For example:
+
+```text
+/appointments/1/status?status=Completed
+```
+
+results in:
+
+```text
+status = Completed
+```
+
+---
+
+## `@Service`
+
+```java
+@Service
+```
+
+Marks a class as a Spring service component.
+
+---
+
+## `@Entity`
+
+```java
+@Entity
+```
+
+Marks a class as a JPA entity.
+
+---
+
+## `@Id`
+
+```java
+@Id
+```
+
+Defines the primary key of an entity.
+
+---
+
+## `@GeneratedValue`
+
+```java
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+```
+
+Configures automatic ID generation.
+
+---
+
+## `@ManyToOne`
+
+```java
+@ManyToOne
+```
+
+Defines a many-to-one relationship between entities.
+
+The Appointment entity uses this relationship for both Patient and Doctor.
+
+---
+
+## `@JoinColumn`
+
+```java
+@JoinColumn(name = "doctor_id")
+```
+
+Specifies the database column used to store the relationship.
+
+---
+
+## `@CrossOrigin`
+
+```java
+@CrossOrigin(...)
+```
+
+Allows the backend to accept requests from specified frontend origins.
+
+This is required during local development when the frontend and backend run on different ports.
+
+---
+
+# Dependency Injection
+
+The application uses constructor-based dependency injection.
+
+For example:
+
+```java
+private final PatientRepository patientRepository;
+
+public PatientService(
+        PatientRepository patientRepository) {
+
+    this.patientRepository = patientRepository;
+}
+```
+
+`PatientService` requires `PatientRepository`.
+
+Spring automatically creates the required repository object and supplies it to the constructor.
+
+This is called:
+
+```text
+Constructor Dependency Injection
+```
+
+The same approach is used throughout the application.
+
+---
+
+# JPA and Hibernate
+
+JPA stands for:
+
+```text
+Java Persistence API
+```
+
+It provides a standard programming model for persistence in Java applications.
+
+Hibernate is the ORM implementation used by Spring Boot in this project.
+
+The general flow is:
+
+```text
+Java Entity
+    |
+    v
+Spring Data JPA
+    |
+    v
+Hibernate
+    |
+    v
+SQL
+    |
+    v
+H2 Database
+```
+
+Hibernate maps Java objects to relational database records.
+
+For example:
+
+```text
+Java Object                  Database Record
+
+Patient                      patients
+-------                      --------
+id             ---------->   id
+name           ---------->   name
+age            ---------->   age
+gender         ---------->   gender
+phone          ---------->   phone
+```
+
+---
+
+# REST API
+
+The backend follows REST principles and uses HTTP methods to represent operations.
+
+| HTTP Method | Purpose       |
+| ----------- | ------------- |
+| GET         | Retrieve data |
+| POST        | Create data   |
+| PUT         | Update data   |
+| DELETE      | Delete data   |
+
+The backend runs locally on:
+
+```text
+http://localhost:8080
+```
+
+---
+
+# Patient APIs
+
+## Create Patient
+
+```http
+POST /patients
+```
+
+Request body:
 
 ```json
 {
-    "id": 1,
-    "name": "Rahul",
-    "age": 25,
-    "disease": "Fever"
+    "name": "<patient-name>",
+    "age": 0,
+    "gender": "<gender>",
+    "phone": "<phone-number>"
 }
 ```
 
 ---
 
-#  Responsibilities at a Glance
+## Get All Patients
 
-| Layer      | Main Responsibility  | Example           |
-| ---------- | -------------------- | ----------------- |
-| Controller | Handle HTTP requests | `POST /patients`  |
-| Service    | Business logic       | `createPatient()` |
-| Repository | Database access      | `save()`          |
-| Entity     | Represent data       | `Patient`         |
-
----
-
-#  What Each Layer Should Avoid
-
-## Controller
-
-Should avoid:
-
-```text
-Complex business logic
-Direct database operations
+```http
+GET /patients
 ```
 
 ---
 
-## Service
+## Get Patient by ID
 
-Should avoid:
-
-```text
-HTTP-specific handling
+```http
+GET /patients/{id}
 ```
-
-The Service should not need to know whether the request came from Postman, a browser, or a mobile app.
 
 ---
 
-## Repository
+## Delete Patient
 
-Should avoid:
-
-```text
-Business logic
-HTTP handling
+```http
+DELETE /patients/{id}
 ```
-
-Its primary purpose is data access.
 
 ---
 
-## Entity
+# Doctor APIs
 
-Should primarily represent:
+## Create Doctor
 
-```text
-Application data
-Database mapping
+```http
+POST /doctors
 ```
 
-It should not become a place for handling HTTP requests.
+Request body:
+
+```json
+{
+    "name": "<doctor-name>",
+    "specialization": "<specialization>",
+    "experience": 0
+}
+```
 
 ---
 
+## Get All Doctors
 
+```http
+GET /doctors
+```
 
-In our application:
+---
+
+## Get Doctor by ID
+
+```http
+GET /doctors/{id}
+```
+
+---
+
+## Delete Doctor
+
+```http
+DELETE /doctors/{id}
+```
+
+---
+
+# Appointment APIs
+
+## Create Appointment
+
+```http
+POST /appointments
+```
+
+Request body:
+
+```json
+{
+    "patientId": 0,
+    "doctorId": 0,
+    "date": "YYYY-MM-DD",
+    "time": "HH:MM"
+}
+```
+
+The backend automatically sets:
 
 ```text
-Patient/User
-      ↓
-Controller
-      ↓
-Service
-      ↓
-Repository
-      ↓
+status = Scheduled
+```
+
+The referenced patient and doctor must already exist.
+
+---
+
+## Get All Appointments
+
+```http
+GET /appointments
+```
+
+This returns the appointments currently stored in the database.
+
+---
+
+## Update Appointment Status
+
+```http
+PUT /appointments/{id}/status?status=<status>
+```
+
+Supported statuses currently include:
+
+```text
+Scheduled
+Completed
+Cancelled
+```
+
+---
+
+# API Testing
+
+The APIs can be tested using Postman.
+
+Start the backend:
+
+```bash
+mvn spring-boot:run
+```
+
+The server will be available at:
+
+```text
+http://localhost:8080
+```
+
+Examples of endpoints to test:
+
+```text
+GET    http://localhost:8080/patients
+GET    http://localhost:8080/doctors
+GET    http://localhost:8080/appointments
+```
+
+For POST requests, configure the request body as:
+
+```text
+Body
+  -> raw
+  -> JSON
+```
+
+and provide the required JSON payload.
+
+---
+
+# Running the Backend
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/Abhigyan-19/Hospital-Management.git
+```
+
+Move into the project directory:
+
+```bash
+cd Hospital-Management
+```
+
+---
+
+## 2. Verify Java
+
+```bash
+java -version
+```
+
+The project is configured for Java 21.
+
+---
+
+## 3. Verify Maven
+
+```bash
+mvn -version
+```
+
+---
+
+## 4. Compile the Project
+
+```bash
+mvn clean compile
+```
+
+---
+
+## 5. Run the Application
+
+```bash
+mvn spring-boot:run
+```
+
+The backend should then be available at:
+
+```text
+http://localhost:8080
+```
+
+---
+
+# Frontend Integration
+
+The frontend and backend are separate applications.
+
+The architecture is:
+
+```text
+React / Vite Frontend
+        |
+        | HTTP requests using Axios
+        |
+        v
+Spring Boot Backend
+        |
+        v
+H2 Database
+```
+
+During local development, the frontend and backend run on different ports.
+
+For example:
+
+```text
+Frontend: http://localhost:5173
+Backend:  http://localhost:8080
+```
+
+The frontend communicates with the backend through REST APIs.
+
+For example:
+
+```text
+Frontend
+   |
+   | POST /appointments
+   v
+Spring Boot
+   |
+   v
+AppointmentController
+   |
+   v
+AppointmentService
+   |
+   v
 Database
 ```
 
-### Controller = Receptionist
-
-Receives the request.
-
-### Service = Hospital Staff
-
-Decides what needs to happen.
-
-### Repository = Database Clerk
-
-Gets or stores information.
-
-### Entity = Patient/Doctor Record
-
-Represents the actual data.
+The backend includes CORS configuration to allow requests from the configured frontend development origins.
 
 ---
 
+# Running the Frontend
 
+From the frontend project directory:
+
+```bash
+npm install
+```
+
+Then:
+
+```bash
+npm run dev
+```
+
+The frontend development server will normally be available at:
+
+```text
+http://localhost:5173
+```
+
+The backend and frontend are independent processes, so both should be running when testing the complete application.
+
+---
+
+# Maven Commands
+
+Compile the project:
+
+```bash
+mvn compile
+```
+
+Clean the build:
+
+```bash
+mvn clean
+```
+
+Clean and compile:
+
+```bash
+mvn clean compile
+```
+
+Run tests:
+
+```bash
+mvn test
+```
+
+Run the Spring Boot application:
+
+```bash
+mvn spring-boot:run
+```
+
+Package the application:
+
+```bash
+mvn package
+```
+
+---
+
+# Git and GitHub
+
+Git is used for version control and GitHub is used to host the source code.
+
+Check the current repository status:
+
+```bash
+git status
+```
+
+Stage changes:
+
+```bash
+git add .
+```
+
+Create a commit:
+
+```bash
+git commit -m "Add appointment booking functionality"
+```
+
+Push changes to GitHub:
+
+```bash
+git push origin main
+```
+
+The usual workflow is:
+
+```text
+Modify Code
+    |
+    v
+git status
+    |
+    v
+git add .
+    |
+    v
+git commit
+    |
+    v
+git push
+    |
+    v
+GitHub
+```
+
+Before committing, it is recommended to check `git status` to make sure that only intended files are being committed.
+
+---
+
+# Gitignore
+
+The `.gitignore` file prevents unnecessary or sensitive files from being committed to the repository.
+
+Common entries include:
+
+```text
+.idea/
+target/
+*.iml
+.env
+```
+
+These files may contain IDE-specific configuration, generated build files, or environment-specific configuration.
+
+Sensitive information such as passwords, API keys, and database credentials should never be committed to GitHub.
+
+---
+
+# Current Learning Outcomes
+
+This project currently provides practical experience with:
+
+### Java
+
+* Classes and objects
+* Constructors
+* Interfaces
+* Encapsulation
+* Packages
+* Getters and setters
+
+### Spring Boot
+
+* Application configuration
+* Dependency Injection
+* REST Controllers
+* Services
+* Component scanning
+* CORS
+
+### Spring Data JPA
+
+* `JpaRepository`
+* CRUD operations
+* Repository query methods
+* Entity persistence
+
+### Hibernate
+
+* ORM
+* Object-relational mapping
+* Entity persistence
+* Entity relationships
+
+### Database
+
+* H2 Database
+* Primary keys
+* Foreign keys
+* Many-to-one relationships
+
+### REST API Development
+
+* GET
+* POST
+* PUT
+* DELETE
+* Request bodies
+* Path variables
+* Request parameters
+* JSON
+
+### DTOs
+
+* Data Transfer Objects
+* Separating API requests from entities
+* Passing entity IDs between client and backend
+
+### Development Tools
+
+* IntelliJ IDEA
+* Maven
+* Postman
+* Git
+* GitHub
+
+### Frontend Integration
+
+* React / Vite
+* Axios
+* Frontend-backend communication
+* CORS
+* Separate frontend and backend development servers
+
+---
+
+# Future Improvements
+
+The following features can be added as the project develops:
+
+* Patient update functionality
+* Doctor update functionality
+* Appointment deletion
+* Appointment rescheduling
+* Doctor availability schedules
+* Patient medical records
+* Prescriptions
+* Authentication and authorization
+* Role-based access control
+* JWT authentication
+* Input validation
+* Global exception handling
+* Standardized API error responses
+* Pagination
+* Sorting and filtering
+* Unit testing
+* Integration testing
+* Swagger/OpenAPI documentation
+* PostgreSQL or MySQL integration
+* Production deployment
+* Docker-based deployment
+
+---
+
+# Application Overview
+
+The current backend can be summarized as:
+
+```text
+                    Client
+                      |
+                      | HTTP
+                      v
+               +--------------+
+               |  Controller  |
+               +------+-------+
+                      |
+                      v
+               +--------------+
+               |   Service    |
+               +------+-------+
+                      |
+                      v
+               +--------------+
+               | Repository   |
+               +------+-------+
+                      |
+                      v
+               +--------------+
+               | JPA/Hibernate|
+               +------+-------+
+                      |
+                      v
+               +--------------+
+               | H2 Database  |
+               +--------------+
+```
+
+For appointment creation:
+
+```text
+Client
+  |
+  | AppointmentRequest
+  v
+AppointmentController
+  |
+  v
+AppointmentService
+  |
+  +---- PatientRepository
+  |
+  +---- DoctorRepository
+  |
+  +---- AppointmentRepository
+  |
+  v
+Database
+```
+
+The separation of these responsibilities makes the application easier to understand, test, maintain, and extend.
