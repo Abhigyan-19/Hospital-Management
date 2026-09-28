@@ -9,6 +9,7 @@ The application currently manages:
 * Patients
 * Doctors
 * Appointments
+* Prescriptions
 
 The backend follows a layered architecture consisting of Controllers, Services, Repositories, Entities, and Data Transfer Objects (DTOs).
 
@@ -28,44 +29,53 @@ The backend follows a layered architecture consisting of Controllers, Services, 
 10. [Patient Entity](#patient-entity)
 11. [Doctor Entity](#doctor-entity)
 12. [Appointment Entity](#appointment-entity)
-13. [Entity Relationships](#entity-relationships)
-14. [Repository Layer](#repository-layer)
-15. [Patient Repository](#patient-repository)
-16. [Doctor Repository](#doctor-repository)
-17. [Appointment Repository](#appointment-repository)
-18. [DTO Layer](#dto-layer)
-19. [Appointment Request DTO](#appointment-request-dto)
-20. [Service Layer](#service-layer)
-21. [Patient Service](#patient-service)
-22. [Doctor Service](#doctor-service)
-23. [Appointment Service](#appointment-service)
-24. [Controller Layer](#controller-layer)
-25. [Patient Controller](#patient-controller)
-26. [Doctor Controller](#doctor-controller)
-27. [Appointment Controller](#appointment-controller)
-28. [Appointment Booking Logic](#appointment-booking-logic)
-29. [Appointment Status](#appointment-status)
-30. [Important Spring Annotations](#important-spring-annotations)
-31. [Dependency Injection](#dependency-injection)
-32. [JPA and Hibernate](#jpa-and-hibernate)
-33. [REST API](#rest-api)
-34. [Patient APIs](#patient-apis)
-35. [Doctor APIs](#doctor-apis)
-36. [Appointment APIs](#appointment-apis)
-37. [API Testing](#api-testing)
-38. [Running the Backend](#running-the-backend)
-39. [Frontend Integration](#frontend-integration)
-40. [Maven Commands](#maven-commands)
-41. [Git and GitHub](#git-and-github)
-42. [Gitignore](#gitignore)
-43. [Current Learning Outcomes](#current-learning-outcomes)
-44. [Future Improvements](#future-improvements)
+13. [Prescription Entity](#prescription-entity)
+14. [Prescription Medicine Entity](#prescription-medicine-entity)
+15. [Entity Relationships](#entity-relationships)
+16. [Repository Layer](#repository-layer)
+17. [Patient Repository](#patient-repository)
+18. [Doctor Repository](#doctor-repository)
+19. [Appointment Repository](#appointment-repository)
+20. [Prescription Repository](#prescription-repository)
+21. [DTO Layer](#dto-layer)
+22. [Appointment Request DTO](#appointment-request-dto)
+23. [Prescription Request DTO](#prescription-request-dto)
+24. [Service Layer](#service-layer)
+25. [Patient Service](#patient-service)
+26. [Doctor Service](#doctor-service)
+27. [Appointment Service](#appointment-service)
+28. [Prescription Service](#prescription-service)
+29. [Controller Layer](#controller-layer)
+30. [Patient Controller](#patient-controller)
+31. [Doctor Controller](#doctor-controller)
+32. [Appointment Controller](#appointment-controller)
+33. [Prescription Controller](#prescription-controller)
+34. [Appointment Booking Logic](#appointment-booking-logic)
+35. [Appointment Status](#appointment-status)
+36. [Prescription Authorization](#prescription-authorization)
+37. [Prescription Creation Flow](#prescription-creation-flow)
+38. [Important Spring Annotations](#important-spring-annotations)
+39. [Dependency Injection](#dependency-injection)
+40. [JPA and Hibernate](#jpa-and-hibernate)
+41. [REST API](#rest-api)
+42. [Patient APIs](#patient-apis)
+43. [Doctor APIs](#doctor-apis)
+44. [Appointment APIs](#appointment-apis)
+45. [Prescription APIs](#prescription-apis)
+46. [API Testing](#api-testing)
+47. [Running the Backend](#running-the-backend)
+48. [Frontend Integration](#frontend-integration)
+49. [Maven Commands](#maven-commands)
+50. [Git and GitHub](#git-and-github)
+51. [Gitignore](#gitignore)
+52. [Current Learning Outcomes](#current-learning-outcomes)
+53. [Future Improvements](#future-improvements)
 
 ---
 
 # Project Overview
 
-The Hospital Management System is a Spring Boot REST API that provides backend functionality for managing patients, doctors, and appointments.
+The Hospital Management System is a Spring Boot REST API that provides backend functionality for managing patients, doctors, appointments, and prescriptions.
 
 The application exposes REST endpoints that can be consumed by:
 
@@ -74,7 +84,9 @@ The application exposes REST endpoints that can be consumed by:
 * Mobile applications
 * Other backend services
 
-The current backend provides CRUD functionality for patients and doctors, along with appointment creation, appointment retrieval, and appointment status management.
+The current backend provides CRUD functionality for patients and doctors, appointment creation and retrieval, appointment status management, and prescription creation and retrieval.
+
+The prescription functionality also contains an authorization rule that verifies whether a doctor has a completed appointment with the patient before allowing a prescription to be created.
 
 ---
 
@@ -103,6 +115,9 @@ The project covers:
 * Git and GitHub
 * Frontend-backend communication
 * CORS
+* Business logic
+* Prescription management
+* Authorization based on appointment status
 
 The project is intentionally structured so that each layer has a clearly defined responsibility.
 
@@ -110,21 +125,21 @@ The project is intentionally structured so that each layer has a clearly defined
 
 # Technologies Used
 
-| Technology        | Purpose                                         |
-| ----------------- | ----------------------------------------------- |
-| Java 21           | Programming language                            |
-| Spring Boot 3.2.5 | Backend framework                               |
-| Spring Web        | REST API development                            |
-| Spring Data JPA   | Database access                                 |
-| Hibernate         | ORM implementation                              |
-| H2 Database       | Relational database                             |
-| Maven             | Build and dependency management                 |
-| IntelliJ IDEA     | Development environment                         |
-| Postman           | API testing                                     |
-| Git               | Version control                                 |
-| GitHub            | Source code hosting                             |
-| React / Vite      | Frontend integration                            |
-| Axios             | HTTP communication between frontend and backend |
+| Technology        | Purpose                         |
+| ----------------- | ------------------------------- |
+| Java 21           | Programming language            |
+| Spring Boot 3.2.5 | Backend framework               |
+| Spring Web        | REST API development            |
+| Spring Data JPA   | Database access                 |
+| Hibernate         | ORM implementation              |
+| H2 Database       | Relational database             |
+| Maven             | Build and dependency management |
+| IntelliJ IDEA     | Development environment         |
+| Postman           | API testing                     |
+| Git               | Version control                 |
+| GitHub            | Source code hosting             |
+| React / Vite      | Frontend integration            |
+| Axios             | HTTP communication              |
 
 ---
 
@@ -167,28 +182,37 @@ hospital_management
     │   │
     │   │               ├── HospitalManagementApplication.java
     │   │               │
+    │   │               ├── config/
+    │   │               │   └── CorsConfig.java
+    │   │               │
     │   │               ├── controller/
     │   │               │   ├── PatientController.java
     │   │               │   ├── DoctorController.java
-    │   │               │   └── AppointmentController.java
+    │   │               │   ├── AppointmentController.java
+    │   │               │   └── PrescriptionController.java
     │   │               │
     │   │               ├── dto/
-    │   │               │   └── AppointmentRequest.java
+    │   │               │   ├── AppointmentRequest.java
+    │   │               │   └── PrescriptionRequest.java
     │   │               │
     │   │               ├── entity/
     │   │               │   ├── Patient.java
     │   │               │   ├── Doctor.java
-    │   │               │   └── Appointment.java
+    │   │               │   ├── Appointment.java
+    │   │               │   ├── Prescription.java
+    │   │               │   └── PrescriptionMedicine.java
     │   │               │
     │   │               ├── repository/
     │   │               │   ├── PatientRepository.java
     │   │               │   ├── DoctorRepository.java
-    │   │               │   └── AppointmentRepository.java
+    │   │               │   ├── AppointmentRepository.java
+    │   │               │   └── PrescriptionRepository.java
     │   │               │
     │   │               └── service/
     │   │                   ├── PatientService.java
     │   │                   ├── DoctorService.java
-    │   │                   └── AppointmentService.java
+    │   │                   ├── AppointmentService.java
+    │   │                   └── PrescriptionService.java
     │   │
     │   └── resources/
     │
@@ -242,16 +266,7 @@ Consider an appointment creation request:
 POST /appointments
 ```
 
-The client sends appointment information containing:
-
-```json
-{
-    "patientId": 1,
-    "doctorId": 1,
-    "date": "YYYY-MM-DD",
-    "time": "HH:MM"
-}
-```
+The client sends appointment information through the `AppointmentRequest` DTO.
 
 The request flows through the application as follows:
 
@@ -272,6 +287,35 @@ AppointmentService
   +----> DoctorRepository
   |
   +----> AppointmentRepository
+  |
+  v
+JPA / Hibernate
+  |
+  v
+H2 Database
+```
+
+For prescription creation, the flow is:
+
+```text
+Client
+  |
+  v
+PrescriptionController
+  |
+  v
+PrescriptionRequest
+  |
+  v
+PrescriptionService
+  |
+  +----> PatientRepository
+  |
+  +----> DoctorRepository
+  |
+  +----> AppointmentRepository
+  |
+  +----> PrescriptionRepository
   |
   v
 JPA / Hibernate
@@ -339,9 +383,11 @@ The current entities are:
 Patient
 Doctor
 Appointment
+Prescription
+PrescriptionMedicine
 ```
 
-Each entity is mapped to a database table using JPA annotations.
+Each entity is mapped to database tables using JPA annotations.
 
 ---
 
@@ -394,15 +440,7 @@ experience
 
 The doctor's specialization represents their medical department or area of practice.
 
-For example, a doctor's specialization may be:
-
-```text
-Cardiology
-Neurology
-Orthopedics
-```
-
-The actual values are stored in the database and are not hard-coded into the application.
+The actual specialization values are stored in the database and are not hard-coded into the application.
 
 ---
 
@@ -421,9 +459,7 @@ time
 status
 ```
 
-Unlike a simple string-based model, the appointment does not store patient and doctor names directly.
-
-Instead, it maintains relationships with the `Patient` and `Doctor` entities:
+The appointment maintains relationships with the `Patient` and `Doctor` entities:
 
 ```java
 @ManyToOne
@@ -443,26 +479,127 @@ This allows an appointment to reference existing patient and doctor records usin
 
 ---
 
+# Prescription Entity
+
+The `Prescription` entity represents a prescription created by a doctor for a patient.
+
+Its fields are:
+
+```text
+id
+patient
+doctor
+notes
+createdAt
+medicines
+```
+
+The prescription maintains relationships with both the patient and doctor:
+
+```java
+@ManyToOne
+@JoinColumn(name = "patient_id", nullable = false)
+private Patient patient;
+```
+
+and:
+
+```java
+@ManyToOne
+@JoinColumn(name = "doctor_id", nullable = false)
+private Doctor doctor;
+```
+
+A prescription also contains a collection of medicines:
+
+```java
+@OneToMany(
+        mappedBy = "prescription",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+private List<PrescriptionMedicine> medicines;
+```
+
+The prescription therefore acts as the parent entity for its associated medicines.
+
+---
+
+# Prescription Medicine Entity
+
+The `PrescriptionMedicine` entity represents an individual medicine included in a prescription.
+
+Its fields are:
+
+```text
+id
+name
+dosage
+frequency
+duration
+prescription
+```
+
+Each medicine belongs to one prescription:
+
+```java
+@ManyToOne
+@JoinColumn(name = "prescription_id", nullable = false)
+private Prescription prescription;
+```
+
+The relationship is bidirectional at the JPA level.
+
+The `prescription` field is excluded from JSON serialization using:
+
+```java
+@JsonIgnore
+```
+
+This prevents recursive JSON serialization when a prescription contains medicines and each medicine refers back to its prescription.
+
+The database relationship is not affected by `@JsonIgnore`.
+
+---
+
 # Entity Relationships
 
-The application currently has the following relationship:
+The current entity relationships can be represented as:
 
 ```text
 Patient 1 -------- * Appointment * -------- 1 Doctor
+
+Patient 1 -------- * Prescription * -------- 1 Doctor
+
+Prescription 1 -------- * PrescriptionMedicine
 ```
 
 This means:
+
+### Appointment
 
 * One patient can have multiple appointments.
 * One doctor can have multiple appointments.
 * Each appointment belongs to one patient.
 * Each appointment belongs to one doctor.
 
-The corresponding database structure can be represented conceptually as:
+### Prescription
+
+* One patient can have multiple prescriptions.
+* One doctor can create multiple prescriptions.
+* Each prescription belongs to one patient.
+* Each prescription belongs to one doctor.
+
+### Prescription Medicine
+
+* One prescription can contain multiple medicines.
+* Each medicine belongs to one prescription.
+
+Conceptually, the database structure is:
 
 ```text
 patients
----------
+--------
 id
 name
 age
@@ -486,9 +623,26 @@ doctor_id
 date
 time
 status
-```
 
-`patient_id` and `doctor_id` act as references to the corresponding records.
+
+prescriptions
+-------------
+id
+patient_id
+doctor_id
+notes
+created_at
+
+
+prescription_medicines
+----------------------
+id
+name
+dosage
+frequency
+duration
+prescription_id
+```
 
 ---
 
@@ -502,6 +656,7 @@ The current repositories are:
 PatientRepository
 DoctorRepository
 AppointmentRepository
+PrescriptionRepository
 ```
 
 The general flow is:
@@ -578,50 +733,42 @@ public interface AppointmentRepository
 }
 ```
 
-In addition to standard CRUD operations, it contains a custom derived query method used to check doctor availability:
+In addition to standard CRUD operations, it contains derived query methods used for appointment availability and prescription authorization.
 
-```java
-boolean existsByDoctorIdAndDateAndTimeAndStatusNot(
-        Long doctorId,
-        String date,
-        String time,
-        String status
-);
-```
+The availability query checks whether a doctor already has an appointment at a particular date and time while excluding cancelled appointments.
 
-This checks whether an appointment already exists for a specific:
+The prescription authorization query searches for an appointment using:
 
 ```text
-Doctor
-Date
-Time
+Patient ID
+Doctor ID
+Appointment Status
 ```
 
-while excluding a specified status, which is currently used to exclude cancelled appointments.
+This allows the service layer to verify whether a valid completed appointment exists before creating a prescription.
 
 ---
 
-# Why Repository is an Interface
+# Prescription Repository
 
-A repository is defined as an interface because Spring Data JPA provides the implementation automatically.
-
-For example:
+The Prescription Repository is:
 
 ```java
-public interface PatientRepository
-        extends JpaRepository<Patient, Long> {
+public interface PrescriptionRepository
+        extends JpaRepository<Prescription, Long> {
 }
 ```
 
-There is no need to manually create an implementation such as:
+It provides standard database operations for prescriptions, including:
 
-```text
-PatientRepositoryImpl
+```java
+save()
+findAll()
+findById()
+deleteById()
 ```
 
-for standard CRUD operations.
-
-Spring Data JPA generates the required implementation at runtime.
+The `PrescriptionService` uses this repository to persist and retrieve prescriptions.
 
 ---
 
@@ -635,16 +782,16 @@ Data Transfer Object
 
 A DTO is used to define the data transferred between the client and the application.
 
-The current project contains:
+The current DTOs are:
 
 ```text
-dto/
-└── AppointmentRequest.java
+AppointmentRequest
+PrescriptionRequest
 ```
 
-The appointment request DTO separates the API input from the JPA entity.
+DTOs separate API input from JPA entities.
 
-This is useful because the client should provide the IDs of the patient and doctor rather than constructing complete `Patient` and `Doctor` objects.
+This prevents the client from having to directly construct persistence entities.
 
 ---
 
@@ -652,43 +799,53 @@ This is useful because the client should provide the IDs of the patient and doct
 
 The `AppointmentRequest` contains:
 
-```java
-private Long patientId;
-private Long doctorId;
-private String date;
-private String time;
+```text
+patientId
+doctorId
+date
+time
 ```
 
-The client therefore sends:
-
-```json
-{
-    "patientId": 1,
-    "doctorId": 1,
-    "date": "YYYY-MM-DD",
-    "time": "HH:MM"
-}
-```
+The client provides references to an existing patient and doctor.
 
 The backend then:
 
-1. Finds the patient using `patientId`.
-2. Finds the doctor using `doctorId`.
+1. Finds the patient.
+2. Finds the doctor.
 3. Checks the doctor's availability.
 4. Creates an `Appointment` entity.
 5. Sets the initial status to `Scheduled`.
 6. Saves the appointment.
 
-The client does not directly provide:
+The appointment status is controlled by the backend rather than being supplied during appointment creation.
+
+---
+
+# Prescription Request DTO
+
+The `PrescriptionRequest` defines the information required to create a prescription.
+
+It contains:
 
 ```text
-appointmentId
-patient object
-doctor object
-status
+patientId
+doctorId
+notes
+medicines
 ```
 
-These are handled by the backend.
+The medicines collection contains the information for each prescribed medicine:
+
+```text
+name
+dosage
+frequency
+duration
+```
+
+The client therefore sends prescription information through a DTO instead of directly sending a JPA `Prescription` entity.
+
+The backend uses the patient and doctor IDs to retrieve the corresponding entities before creating the prescription.
 
 ---
 
@@ -702,6 +859,7 @@ The current services are:
 PatientService
 DoctorService
 AppointmentService
+PrescriptionService
 ```
 
 The basic relationship is:
@@ -806,6 +964,49 @@ DoctorRepository
 AppointmentRepository
 ```
 
+The service also manages appointment status changes.
+
+---
+
+# Prescription Service
+
+`PrescriptionService` contains the business logic for creating and retrieving prescriptions.
+
+Creating a prescription follows this process:
+
+```text
+PrescriptionRequest
+       |
+       v
+Find Patient
+       |
+       v
+Find Doctor
+       |
+       v
+Check Completed Appointment
+       |
+       v
+Create Prescription
+       |
+       v
+Create Prescription Medicines
+       |
+       v
+Save Prescription
+```
+
+The service coordinates:
+
+```text
+PatientRepository
+DoctorRepository
+AppointmentRepository
+PrescriptionRepository
+```
+
+The prescription cannot be created unless the authorization condition is satisfied.
+
 ---
 
 # Controller Layer
@@ -818,6 +1019,7 @@ The current controllers are:
 PatientController
 DoctorController
 AppointmentController
+PrescriptionController
 ```
 
 Controllers define the public REST API of the application.
@@ -897,6 +1099,27 @@ The controller delegates appointment operations to `AppointmentService`.
 
 ---
 
+# Prescription Controller
+
+The base endpoint is:
+
+```text
+/prescriptions
+```
+
+Supported operations include:
+
+```text
+POST /prescriptions
+GET  /prescriptions
+```
+
+The controller delegates prescription operations to `PrescriptionService`.
+
+The controller does not directly perform the appointment authorization check. That responsibility belongs to the service layer.
+
+---
+
 # Appointment Booking Logic
 
 Appointment creation follows a defined business flow.
@@ -907,16 +1130,7 @@ The client sends:
 POST /appointments
 ```
 
-with:
-
-```json
-{
-    "patientId": 1,
-    "doctorId": 1,
-    "date": "YYYY-MM-DD",
-    "time": "HH:MM"
-}
-```
+with the required appointment information.
 
 The backend first verifies that the referenced patient exists.
 
@@ -940,13 +1154,6 @@ If such an appointment exists and has not been cancelled, the new appointment is
 
 This allows different doctors to have appointments at the same time.
 
-For example:
-
-```text
-Doctor A -> 09:30 -> Booked
-Doctor B -> 09:30 -> Available
-```
-
 The booking restriction therefore applies to a specific doctor rather than globally to the time slot.
 
 ---
@@ -959,10 +1166,11 @@ New appointments are automatically created with:
 Scheduled
 ```
 
-The current status values used by the application are:
+The application currently supports the following appointment statuses:
 
 ```text
 Scheduled
+Confirmed
 Completed
 Cancelled
 ```
@@ -975,19 +1183,152 @@ PUT /appointments/{id}/status
 
 with the status supplied as a request parameter.
 
-For example:
+The appointment status represents the current stage of the appointment lifecycle.
+
+Conceptually:
 
 ```text
-PUT /appointments/{id}/status?status=Completed
+Scheduled
+    |
+    v
+Confirmed
+    |
+    v
+Completed
 ```
 
-or:
+An appointment may also be:
 
 ```text
-PUT /appointments/{id}/status?status=Cancelled
+Cancelled
 ```
 
-Cancelled appointments do not prevent the same doctor from being booked for that date and time again.
+Cancelled appointments do not prevent the same doctor from being booked for the same date and time again.
+
+---
+
+# Prescription Authorization
+
+Prescription creation contains a business rule that connects prescriptions to appointments.
+
+A doctor can create a prescription for a patient only when that doctor has a **Completed** appointment with that patient.
+
+The backend checks:
+
+```text
+Patient ID
++
+Doctor ID
++
+Appointment Status = Completed
+```
+
+The repository query searches for an appointment matching all three conditions.
+
+Conceptually:
+
+```text
+Prescription Request
+        |
+        v
+Find Patient
+        |
+        v
+Find Doctor
+        |
+        v
+Search Appointment
+        |
+        +---- Patient matches
+        |
+        +---- Doctor matches
+        |
+        +---- Status = Completed
+        |
+        v
+Authorization successful
+        |
+        v
+Create Prescription
+```
+
+If no matching completed appointment exists, the backend rejects the request with:
+
+```text
+HTTP 403 Forbidden
+```
+
+The response message indicates that the doctor does not have a completed appointment with the patient.
+
+This rule is implemented in the backend so that the business condition is enforced independently of the frontend.
+
+---
+
+# Prescription Creation Flow
+
+The complete prescription creation process is:
+
+```text
+Client
+  |
+  | POST /prescriptions
+  v
+PrescriptionController
+  |
+  v
+PrescriptionService
+  |
+  +----> PatientRepository
+  |          |
+  |          v
+  |       Find Patient
+  |
+  +----> DoctorRepository
+  |          |
+  |          v
+  |       Find Doctor
+  |
+  +----> AppointmentRepository
+  |          |
+  |          v
+  |       Check Completed Appointment
+  |
+  v
+Authorization Successful
+  |
+  v
+Create Prescription
+  |
+  v
+Create PrescriptionMedicine Objects
+  |
+  v
+PrescriptionRepository
+  |
+  v
+H2 Database
+```
+
+The prescription contains:
+
+```text
+Patient
+Doctor
+Notes
+Creation timestamp
+Medicines
+```
+
+Each medicine contains:
+
+```text
+Name
+Dosage
+Frequency
+Duration
+```
+
+The medicines are associated with the prescription through a one-to-many relationship.
 
 ---
 
@@ -1066,7 +1407,7 @@ Handles HTTP DELETE requests.
 ## `@RequestBody`
 
 ```java
-@RequestBody AppointmentRequest request
+@RequestBody PrescriptionRequest request
 ```
 
 Converts the JSON request body into a Java object.
@@ -1084,14 +1425,10 @@ Extracts a value from the URL.
 For example:
 
 ```text
-GET /patients/10
+GET /patients/{id}
 ```
 
-results in:
-
-```text
-id = 10
-```
+allows the patient ID to be read from the URL.
 
 ---
 
@@ -1106,14 +1443,10 @@ Reads a value from the query parameters.
 For example:
 
 ```text
-/appointments/1/status?status=Completed
+/appointments/{id}/status?status=Completed
 ```
 
-results in:
-
-```text
-status = Completed
-```
+provides the appointment status through the query parameter.
 
 ---
 
@@ -1165,7 +1498,21 @@ Configures automatic ID generation.
 
 Defines a many-to-one relationship between entities.
 
-The Appointment entity uses this relationship for both Patient and Doctor.
+The Appointment entity uses this relationship for Patient and Doctor.
+
+The PrescriptionMedicine entity uses it for Prescription.
+
+---
+
+## `@OneToMany`
+
+```java
+@OneToMany(...)
+```
+
+Defines a one-to-many relationship.
+
+The Prescription entity uses it to maintain its collection of medicines.
 
 ---
 
@@ -1176,6 +1523,18 @@ The Appointment entity uses this relationship for both Patient and Doctor.
 ```
 
 Specifies the database column used to store the relationship.
+
+---
+
+## `@JsonIgnore`
+
+```java
+@JsonIgnore
+```
+
+Prevents a field from being included during JSON serialization.
+
+It is used on the `prescription` field inside `PrescriptionMedicine` to prevent recursive serialization.
 
 ---
 
@@ -1218,6 +1577,17 @@ Constructor Dependency Injection
 ```
 
 The same approach is used throughout the application.
+
+For example, `PrescriptionService` receives:
+
+```text
+PrescriptionRepository
+PatientRepository
+DoctorRepository
+AppointmentRepository
+```
+
+through its constructor.
 
 ---
 
@@ -1267,6 +1637,15 @@ gender         ---------->   gender
 phone          ---------->   phone
 ```
 
+The same principle applies to:
+
+```text
+Doctor
+Appointment
+Prescription
+PrescriptionMedicine
+```
+
 ---
 
 # REST API
@@ -1296,16 +1675,7 @@ http://localhost:8080
 POST /patients
 ```
 
-Request body:
-
-```json
-{
-    "name": "<patient-name>",
-    "age": 0,
-    "gender": "<gender>",
-    "phone": "<phone-number>"
-}
-```
+The request body contains the patient information required by the API.
 
 ---
 
@@ -1341,15 +1711,7 @@ DELETE /patients/{id}
 POST /doctors
 ```
 
-Request body:
-
-```json
-{
-    "name": "<doctor-name>",
-    "specialization": "<specialization>",
-    "experience": 0
-}
-```
+The request body contains the doctor information required by the API.
 
 ---
 
@@ -1385,15 +1747,13 @@ DELETE /doctors/{id}
 POST /appointments
 ```
 
-Request body:
+The request body contains:
 
-```json
-{
-    "patientId": 0,
-    "doctorId": 0,
-    "date": "YYYY-MM-DD",
-    "time": "HH:MM"
-}
+```text
+patientId
+doctorId
+date
+time
 ```
 
 The backend automatically sets:
@@ -1422,13 +1782,72 @@ This returns the appointments currently stored in the database.
 PUT /appointments/{id}/status?status=<status>
 ```
 
-Supported statuses currently include:
+Supported statuses are:
 
 ```text
 Scheduled
+Confirmed
 Completed
 Cancelled
 ```
+
+---
+
+# Prescription APIs
+
+## Create Prescription
+
+```http
+POST /prescriptions
+```
+
+The request body contains:
+
+```text
+patientId
+doctorId
+notes
+medicines
+```
+
+Each medicine contains:
+
+```text
+name
+dosage
+frequency
+duration
+```
+
+Before creating the prescription, the backend verifies that:
+
+```text
+Patient exists
+        +
+Doctor exists
+        +
+Completed appointment exists
+```
+
+If the authorization condition is satisfied, the prescription is saved.
+
+Otherwise, the backend returns:
+
+```text
+HTTP 403 Forbidden
+```
+
+---
+
+## Get All Prescriptions
+
+```http
+GET /prescriptions
+```
+
+This returns the prescriptions currently stored in the database.
+
+Each prescription contains its associated patient, doctor, notes, creation timestamp, and medicines.
 
 ---
 
@@ -1451,9 +1870,10 @@ http://localhost:8080
 Examples of endpoints to test:
 
 ```text
-GET    http://localhost:8080/patients
-GET    http://localhost:8080/doctors
-GET    http://localhost:8080/appointments
+GET  http://localhost:8080/patients
+GET  http://localhost:8080/doctors
+GET  http://localhost:8080/appointments
+GET  http://localhost:8080/prescriptions
 ```
 
 For POST requests, configure the request body as:
@@ -1464,7 +1884,9 @@ Body
   -> JSON
 ```
 
-and provide the required JSON payload.
+and provide the fields required by the corresponding DTO.
+
+For prescription testing, the patient and doctor must exist and a completed appointment must exist between them.
 
 ---
 
@@ -1572,6 +1994,29 @@ AppointmentService
 Database
 ```
 
+For prescription creation:
+
+```text
+Frontend
+   |
+   | POST /prescriptions
+   v
+Spring Boot
+   |
+   v
+PrescriptionController
+   |
+   v
+PrescriptionService
+   |
+   +----> AppointmentRepository
+   |
+   +----> PrescriptionRepository
+   |
+   v
+Database
+```
+
 The backend includes CORS configuration to allow requests from the configured frontend development origins.
 
 ---
@@ -1659,7 +2104,7 @@ git add .
 Create a commit:
 
 ```bash
-git commit -m "Add appointment booking functionality"
+git commit -m "Add prescription management"
 ```
 
 Push changes to GitHub:
@@ -1724,6 +2169,7 @@ This project currently provides practical experience with:
 * Encapsulation
 * Packages
 * Getters and setters
+* Collections
 
 ### Spring Boot
 
@@ -1733,20 +2179,26 @@ This project currently provides practical experience with:
 * Services
 * Component scanning
 * CORS
+* Business logic
+* HTTP request handling
 
 ### Spring Data JPA
 
 * `JpaRepository`
 * CRUD operations
-* Repository query methods
+* Derived query methods
 * Entity persistence
+* Entity relationships
+* Repository-based database access
 
 ### Hibernate
 
 * ORM
 * Object-relational mapping
 * Entity persistence
-* Entity relationships
+* Many-to-one relationships
+* One-to-many relationships
+* Cascading operations
 
 ### Database
 
@@ -1754,6 +2206,8 @@ This project currently provides practical experience with:
 * Primary keys
 * Foreign keys
 * Many-to-one relationships
+* One-to-many relationships
+* Parent-child entity relationships
 
 ### REST API Development
 
@@ -1765,12 +2219,30 @@ This project currently provides practical experience with:
 * Path variables
 * Request parameters
 * JSON
+* HTTP status codes
 
 ### DTOs
 
 * Data Transfer Objects
 * Separating API requests from entities
 * Passing entity IDs between client and backend
+* Structuring nested request data
+
+### Business Logic
+
+* Appointment availability validation
+* Appointment status management
+* Prescription authorization
+* Completed appointment verification
+* Relationship-based authorization
+
+### Prescription Management
+
+* Prescription creation
+* Prescription retrieval
+* Prescription and medicine relationships
+* Multiple medicines per prescription
+* Prescription authorization based on completed appointments
 
 ### Development Tools
 
@@ -1800,7 +2272,6 @@ The following features can be added as the project develops:
 * Appointment rescheduling
 * Doctor availability schedules
 * Patient medical records
-* Prescriptions
 * Authentication and authorization
 * Role-based access control
 * JWT authentication
@@ -1869,6 +2340,33 @@ AppointmentService
   +---- DoctorRepository
   |
   +---- AppointmentRepository
+  |
+  v
+Database
+```
+
+For prescription creation:
+
+```text
+Client
+  |
+  | PrescriptionRequest
+  v
+PrescriptionController
+  |
+  v
+PrescriptionService
+  |
+  +---- PatientRepository
+  |
+  +---- DoctorRepository
+  |
+  +---- AppointmentRepository
+  |          |
+  |          v
+  |     Completed Appointment
+  |
+  +---- PrescriptionRepository
   |
   v
 Database
