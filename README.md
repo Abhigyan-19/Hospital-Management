@@ -10,6 +10,7 @@ The application currently manages:
 * Doctors
 * Appointments
 * Prescriptions
+* Wards and beds, including patient occupancy and maintenance status
 
 The backend follows a layered architecture consisting of Controllers, Services, Repositories, Entities, and Data Transfer Objects (DTOs).
 
@@ -62,20 +63,21 @@ The backend follows a layered architecture consisting of Controllers, Services, 
 43. [Doctor APIs](#doctor-apis)
 44. [Appointment APIs](#appointment-apis)
 45. [Prescription APIs](#prescription-apis)
-46. [API Testing](#api-testing)
-47. [Running the Backend](#running-the-backend)
-48. [Frontend Integration](#frontend-integration)
-49. [Maven Commands](#maven-commands)
-50. [Git and GitHub](#git-and-github)
-51. [Gitignore](#gitignore)
-52. [Current Learning Outcomes](#current-learning-outcomes)
-53. [Future Improvements](#future-improvements)
+46. [Bed and Ward APIs](#bed-and-ward-apis)
+47. [API Testing](#api-testing)
+48. [Running the Backend](#running-the-backend)
+49. [Frontend Integration](#frontend-integration)
+50. [Maven Commands](#maven-commands)
+51. [Git and GitHub](#git-and-github)
+52. [Gitignore](#gitignore)
+53. [Current Learning Outcomes](#current-learning-outcomes)
+54. [Future Improvements](#future-improvements)
 
 ---
 
 # Project Overview
 
-The Hospital Management System is a Spring Boot REST API that provides backend functionality for managing patients, doctors, appointments, and prescriptions.
+The Hospital Management System is a Spring Boot REST API that provides backend functionality for managing patients, doctors, appointments, prescriptions, wards, and beds.
 
 The application exposes REST endpoints that can be consumed by:
 
@@ -84,7 +86,7 @@ The application exposes REST endpoints that can be consumed by:
 * Mobile applications
 * Other backend services
 
-The current backend provides CRUD functionality for patients and doctors, appointment creation and retrieval, appointment status management, and prescription creation and retrieval.
+The current backend provides CRUD functionality for patients, doctors, wards, and beds; appointment creation and status management; and prescription creation and retrieval. Bed assignments and availability are stored in the database rather than generated from frontend mock data.
 
 The prescription functionality also contains an authorization rule that verifies whether a doctor has a completed appointment with the patient before allowing a prescription to be created.
 
@@ -189,15 +191,25 @@ hospital_management
     │   │               │   ├── PatientController.java
     │   │               │   ├── DoctorController.java
     │   │               │   ├── AppointmentController.java
+    │   │           │   │   ├── BedController.java
+    │   │           │   │   ├── WardController.java
     │   │               │   └── PrescriptionController.java
     │   │               │
     │   │               ├── dto/
     │   │               │   ├── AppointmentRequest.java
+    │   │           │   │   ├── BedRequest.java
+    │   │           │   │   ├── BedAssignmentRequest.java
+    │   │           │   │   ├── BedStatusRequest.java
+    │   │           │   │   ├── BedResponse.java
+    │   │           │   │   ├── WardRequest.java
     │   │               │   └── PrescriptionRequest.java
     │   │               │
     │   │               ├── entity/
     │   │               │   ├── Patient.java
     │   │               │   ├── Doctor.java
+    │   │           │   │   ├── Bed.java
+    │   │           │   │   ├── BedStatus.java
+    │   │           │   │   ├── Ward.java
     │   │               │   ├── Appointment.java
     │   │               │   ├── Prescription.java
     │   │               │   └── PrescriptionMedicine.java
@@ -205,16 +217,21 @@ hospital_management
     │   │               ├── repository/
     │   │               │   ├── PatientRepository.java
     │   │               │   ├── DoctorRepository.java
+    │   │           │   │   ├── BedRepository.java
+    │   │           │   │   ├── WardRepository.java
     │   │               │   ├── AppointmentRepository.java
     │   │               │   └── PrescriptionRepository.java
     │   │               │
     │   │               └── service/
     │   │                   ├── PatientService.java
     │   │                   ├── DoctorService.java
+    │   │           │       ├── BedService.java
+    │   │           │       ├── WardService.java
     │   │                   ├── AppointmentService.java
     │   │                   └── PrescriptionService.java
     │   │
-    │   └── resources/
+    │   │           └── resources/
+    │   │               └── application.properties
     │
     └── test/
 ```
@@ -385,9 +402,13 @@ Doctor
 Appointment
 Prescription
 PrescriptionMedicine
+Ward
+Bed
 ```
 
 Each entity is mapped to database tables using JPA annotations.
+
+Ward records store a name, department, and floor. Bed records store a ward-scoped bed number, status, a required ward reference, and an optional patient reference.
 
 ---
 
@@ -572,6 +593,8 @@ Patient 1 -------- * Appointment * -------- 1 Doctor
 Patient 1 -------- * Prescription * -------- 1 Doctor
 
 Prescription 1 -------- * PrescriptionMedicine
+
+Ward 1 -------- * Bed 0..1 -------- 1 Patient
 ```
 
 This means:
@@ -594,6 +617,14 @@ This means:
 
 * One prescription can contain multiple medicines.
 * Each medicine belongs to one prescription.
+
+### Ward and Bed
+
+* One ward contains multiple beds.
+* Each bed belongs to one ward, and its number must be unique within that ward.
+* A bed can have zero or one assigned patient. A patient can occupy at most one bed.
+* A bed is `AVAILABLE`, `OCCUPIED`, or `MAINTENANCE`.
+* Occupied beds must be released before they can be removed or moved to maintenance.
 
 Conceptually, the database structure is:
 
@@ -1656,6 +1687,7 @@ The backend follows REST principles and uses HTTP methods to represent operation
 | ----------- | ------------- |
 | GET         | Retrieve data |
 | POST        | Create data   |
+| PATCH       | Partially update data |
 | PUT         | Update data   |
 | DELETE      | Delete data   |
 
@@ -1851,6 +1883,117 @@ Each prescription contains its associated patient, doctor, notes, creation times
 
 ---
 
+# Bed and Ward APIs
+
+Ward and bed records are stored by the backend and are used directly by the `/beds` frontend page. Bed responses include the ward name and, when occupied, the assigned patient's ID and name.
+
+## Ward APIs
+
+### Create Ward
+
+```http
+POST /wards
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "Ward A",
+  "department": "Cardiology",
+  "floor": 2
+}
+```
+
+Ward names must be unique. The floor must be zero or greater.
+
+### Get All Wards
+
+```http
+GET /wards
+```
+
+### Delete Ward
+
+```http
+DELETE /wards/{id}
+```
+
+A ward can only be deleted after all of its beds have been removed.
+
+## Bed APIs
+
+### Create Bed
+
+```http
+POST /beds
+Content-Type: application/json
+```
+
+```json
+{
+  "bedNumber": "A-01",
+  "wardId": 1
+}
+```
+
+The bed number must be unique within its ward. New beds start with `AVAILABLE` status.
+
+### Get All Beds
+
+```http
+GET /beds
+```
+
+Each response includes `id`, `bedNumber`, `status`, `wardId`, `wardName`, `patientId`, and `patientName`.
+
+### Assign a Patient
+
+```http
+PATCH /beds/{id}/assign
+Content-Type: application/json
+```
+
+```json
+{
+  "patientId": 42
+}
+```
+
+The bed must be available, the patient must exist, and a patient already assigned to another bed cannot be assigned again. Successful assignment sets the bed to `OCCUPIED`.
+
+### Release a Bed
+
+```http
+PATCH /beds/{id}/release
+```
+
+This clears the patient assignment and sets the bed to `AVAILABLE`. Only occupied beds can be released.
+
+### Change Bed Status
+
+```http
+PATCH /beds/{id}/status
+Content-Type: application/json
+```
+
+```json
+{
+  "status": "MAINTENANCE"
+}
+```
+
+Use `AVAILABLE` or `MAINTENANCE`; assignment and release endpoints control the `OCCUPIED` state.
+
+### Delete Bed
+
+```http
+DELETE /beds/{id}
+```
+
+Occupied beds cannot be deleted. Invalid state transitions and duplicate assignments return an appropriate conflict response.
+
+---
+
 # API Testing
 
 The APIs can be tested using Postman.
@@ -1944,6 +2087,8 @@ The backend should then be available at:
 http://localhost:8080
 ```
 
+H2 uses a file-backed database at `./data/hospital-management.mv.db`, relative to the backend working directory. Ward, bed, patient, and other JPA records therefore remain available after a local backend restart. The `/data/` directory is ignored by Git.
+
 ---
 
 # Frontend Integration
@@ -2018,6 +2163,8 @@ Database
 ```
 
 The backend includes CORS configuration to allow requests from the configured frontend development origins.
+
+Beds & Wards always uses the backend API, including for its patient selector. Start Spring Boot to use this page; `VITE_USE_MOCK` does not switch its data to mock records. The frontend supports creating wards and beds, assigning and releasing patients, changing bed availability/maintenance status, filtering, and deleting eligible records.
 
 ---
 
