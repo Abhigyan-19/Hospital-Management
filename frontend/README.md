@@ -1,6 +1,6 @@
 # SEBASETHU Frontend
 
-SEBASETHU is a React frontend for the Hospital Management System. It uses a light healthcare design, large readable controls, responsive layouts, and mock data until each backend module is available.
+SEBASETHU is a React frontend for the Hospital Management System. It uses a light healthcare design, large readable controls, and responsive layouts. Patients, doctors, and Beds & Wards can use the Spring Boot API; other modules may still use mock data.
 
 ## 1. Requirements
 
@@ -71,8 +71,17 @@ The frontend currently calls these real backend endpoints:
 | POST | `/doctors` | Add doctor |
 | GET | `/doctors/{id}` | Doctor details |
 | DELETE | `/doctors/{id}` | Delete doctor |
+| GET | `/wards` | Ward list |
+| POST | `/wards` | Create ward |
+| DELETE | `/wards/{id}` | Delete an empty ward |
+| GET | `/beds` | Bed register and occupancy |
+| POST | `/beds` | Add bed to a ward |
+| PATCH | `/beds/{id}/assign` | Assign a patient to an available bed |
+| PATCH | `/beds/{id}/release` | Release an occupied bed |
+| PATCH | `/beds/{id}/status` | Mark a bed available or in maintenance |
+| DELETE | `/beds/{id}` | Delete a non-occupied bed |
 
-Appointments, departments, prescriptions, reports, billing, beds, and labs currently use mock services because those backend controllers do not exist yet.
+Appointments, departments, prescriptions, reports, billing, and labs currently use mock data. Beds & Wards always calls the backend, regardless of `VITE_USE_MOCK`; it also loads patients from the backend for bed assignment. Run Spring Boot to use this page.
 
 ## 5. Available pages
 
@@ -91,7 +100,7 @@ Protected pages:
 - `/prescriptions` - create, view and print prescriptions
 - `/reports` - charts, date filters and CSV export
 - `/billing` - invoices and payment status preview
-- `/beds` - ward capacity preview
+- `/beds` - ward and bed inventory, occupancy assignment/release, and maintenance status
 - `/labs` - lab test tracking preview
 - `/settings` - profile and password forms
 
@@ -107,9 +116,9 @@ cd ..
 mvn spring-boot:run
 ```
 
-3. Keep the frontend running in the first terminal.
-4. Change `VITE_USE_MOCK=false` in `.env`.
-5. Restart the frontend with `npm run dev`.
+3. Keep the frontend running in the first terminal. The Beds & Wards page uses the backend automatically.
+4. Change `VITE_USE_MOCK=false` in `.env` if you also want the Patients and Doctors pages to use the backend instead of mock data.
+5. Restart the frontend after changing `.env`.
 
 The backend must allow the frontend origin `http://localhost:5173` through CORS.
 

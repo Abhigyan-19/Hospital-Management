@@ -18,6 +18,9 @@ target/
 # Java
 *.class
 
+# Local H2 database
+/data/
+
 # Logs
 *.log
 

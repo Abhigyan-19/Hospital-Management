@@ -12,6 +12,7 @@ import Prescriptions from "./pages/Prescriptions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Operations from "./pages/Operations";
+import Beds from "./pages/Beds";
 
 export function ProtectedRoute({ roles }) {
   const { user } = useAuth();
@@ -48,7 +49,7 @@ export default function AppRoutes() {
         <Route path="/prescriptions" element={<Prescriptions />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/billing" element={<Operations type="billing" />} />
-        <Route path="/beds" element={<Operations type="beds" />} />
+        <Route path="/beds" element={<Beds />} />
         <Route path="/labs" element={<Operations type="labs" />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
