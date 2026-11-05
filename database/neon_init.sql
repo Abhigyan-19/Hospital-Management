@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS bed CASCADE;
 DROP TABLE IF EXISTS ward CASCADE;
 DROP TABLE IF EXISTS doctor CASCADE;
 DROP TABLE IF EXISTS patient CASCADE;
+DROP TABLE IF EXISTS department CASCADE;
 
 -- 1. Patients Table
 CREATE TABLE patient (
@@ -29,7 +30,15 @@ CREATE TABLE doctor (
     experience INTEGER NOT NULL
 );
 
--- 3. Wards Table
+-- 3. Departments Table
+CREATE TABLE department (
+    id sBIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    head_doctor VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL
+);
+
+-- 4. Wards Table
 CREATE TABLE ward (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -37,7 +46,7 @@ CREATE TABLE ward (
     floor INTEGER NOT NULL
 );
 
--- 4. Beds Table
+-- 5. Beds Table
 CREATE TABLE bed (
     id BIGSERIAL PRIMARY KEY,
     bed_number VARCHAR(255) NOT NULL,
@@ -49,7 +58,7 @@ CREATE TABLE bed (
     CONSTRAINT uq_ward_bed UNIQUE (ward_id, bed_number)
 );
 
--- 5. Appointments Table
+-- 6. Appointments Table
 CREATE TABLE appointments (
     id BIGSERIAL PRIMARY KEY,
     patient_id BIGINT NOT NULL,
@@ -61,7 +70,7 @@ CREATE TABLE appointments (
     CONSTRAINT fk_app_doctor FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON DELETE CASCADE
 );
 
--- 6. Prescriptions Table
+-- 7. Prescriptions Table
 CREATE TABLE prescriptions (
     id BIGSERIAL PRIMARY KEY,
     patient_id BIGINT NOT NULL,
@@ -72,7 +81,7 @@ CREATE TABLE prescriptions (
     CONSTRAINT fk_presc_doctor FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON DELETE CASCADE
 );
 
--- 7. Prescription Medicines Table
+-- 8. Prescription Medicines Table
 CREATE TABLE prescription_medicines (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -82,60 +91,3 @@ CREATE TABLE prescription_medicines (
     prescription_id BIGINT NOT NULL,
     CONSTRAINT fk_pm_prescription FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
 );
-
--- ==========================================================
--- Sample Data Seeding
--- ==========================================================
-
--- Insert Doctors
-INSERT INTO doctor (name, specialization, experience) VALUES
-('Dr. Arvind Sharma', 'Cardiology', 14),
-('Dr. Priya Nair', 'Neurology', 9),
-('Dr. Rajesh Menon', 'Orthopedics', 12),
-('Dr. Ananya Roy', 'Pediatrics', 7),
-('Dr. Vikram Patel', 'General Medicine', 15);
-
--- Insert Patients
-INSERT INTO patient (name, age, gender, phone) VALUES
-('Ramesh Kumar', 45, 'Male', '+91 9876543210'),
-('Sunita Devi', 38, 'Female', '+91 9823456789'),
-('Amit Verma', 29, 'Male', '+91 9712345678'),
-('Meera Iyer', 62, 'Female', '+91 9654321987'),
-('Rahul Sen', 19, 'Male', '+91 9543218765');
-
--- Insert Wards
-INSERT INTO ward (name, department, floor) VALUES
-('General Ward A', 'General Medicine', 1),
-('ICU - Unit 1', 'Critical Care', 2),
-('Cardiology Wing B', 'Cardiology', 3),
-('Pediatric Care', 'Pediatrics', 2);
-
--- Insert Beds
-INSERT INTO bed (bed_number, status, ward_id, patient_id) VALUES
-('B101', 'OCCUPIED', 1, 1),
-('B102', 'AVAILABLE', 1, NULL),
-('B103', 'OCCUPIED', 1, 2),
-('ICU-01', 'OCCUPIED', 2, 4),
-('ICU-02', 'AVAILABLE', 2, NULL),
-('CARD-201', 'AVAILABLE', 3, NULL),
-('PED-301', 'OCCUPIED', 4, 5);
-
--- Insert Appointments
-INSERT INTO appointments (patient_id, doctor_id, date, time, status) VALUES
-(1, 1, '2026-11-05', '10:00 AM', 'SCHEDULED'),
-(2, 5, '2026-11-05', '11:30 AM', 'SCHEDULED'),
-(3, 3, '2026-11-06', '02:00 PM', 'COMPLETED'),
-(4, 2, '2026-11-06', '04:30 PM', 'SCHEDULED');
-
--- Insert Prescriptions
-INSERT INTO prescriptions (patient_id, doctor_id, notes, created_at) VALUES
-(1, 1, 'Patient showing symptoms of mild hypertension. Regular BP monitoring advised.', CURRENT_TIMESTAMP),
-(3, 3, 'Post-fracture recovery plan. Follow physiotherapy routine.', CURRENT_TIMESTAMP);
-
--- Insert Prescription Medicines
-INSERT INTO prescription_medicines (name, dosage, frequency, duration, prescription_id) VALUES
-('Amlodipine', '5mg', 'Once daily in morning', '30 days', 1),
-('Telmisartan', '40mg', 'Once daily with dinner', '30 days', 1),
-('Calcium + Vitamin D3', '500mg', 'Twice daily after food', '15 days', 2),
-('Paracetamol', '650mg', 'SOS (As needed for pain)', '5 days', 2);
-
