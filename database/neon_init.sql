@@ -110,6 +110,7 @@ CREATE TABLE bills (
 CREATE TABLE sms_notification (
     id BIGSERIAL PRIMARY KEY,
     patient_id BIGINT,
+    sender_phone VARCHAR(15) NOT NULL DEFAULT '+91 7890100849',
     recipient_phone VARCHAR(50) NOT NULL,
     recipient_name VARCHAR(255) NOT NULL,
     type VARCHAR(100) NOT NULL,
@@ -118,29 +119,3 @@ CREATE TABLE sms_notification (
     sent_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_sms_patient FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE SET NULL
 );
-
--- 9. Bills Table
-CREATE TABLE bills (
-    id BIGSERIAL PRIMARY KEY,
-    invoice_number VARCHAR(100) NOT NULL UNIQUE,
-    patient_id BIGINT NOT NULL,
-    amount NUMERIC(10, 2) NOT NULL,
-    description TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_bill_patient FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE CASCADE
-);
-
--- 10. SMS Notification Log Table
-CREATE TABLE sms_notification (
-    id BIGSERIAL PRIMARY KEY,
-    patient_id BIGINT,
-    recipient_phone VARCHAR(50) NOT NULL,
-    recipient_name VARCHAR(255) NOT NULL,
-    type VARCHAR(100) NOT NULL,
-    message TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'SENT',
-    sent_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_sms_patient FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE SET NULL
-);
-

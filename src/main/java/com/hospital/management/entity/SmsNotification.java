@@ -15,6 +15,9 @@ public class SmsNotification {
     @JoinColumn(name = "patient_id")
     private Patient patient;
 
+    @Column(name = "sender_phone", nullable = false)
+    private String senderPhone = "+91 7890100849";
+
     @Column(name = "recipient_phone", nullable = false)
     private String recipientPhone;
 
@@ -36,8 +39,9 @@ public class SmsNotification {
     public SmsNotification() {
     }
 
-    public SmsNotification(Patient patient, String recipientPhone, String recipientName, String type, String message, String status) {
+    public SmsNotification(Patient patient, String senderPhone, String recipientPhone, String recipientName, String type, String message, String status) {
         this.patient = patient;
+        this.senderPhone = senderPhone;
         this.recipientPhone = recipientPhone;
         this.recipientName = recipientName;
         this.type = type;
@@ -60,6 +64,14 @@ public class SmsNotification {
 
     public void setPatient(Patient patient) {
         this.patient = patient;
+    }
+
+    public String getSenderPhone() {
+        return senderPhone;
+    }
+
+    public void setSenderPhone(String senderPhone) {
+        this.senderPhone = senderPhone;
     }
 
     public String getRecipientPhone() {
@@ -110,4 +122,3 @@ public class SmsNotification {
         this.sentAt = sentAt;
     }
 }
-

@@ -29,6 +29,9 @@ public class SmsService {
     private final SmsNotificationRepository smsRepository;
     private final HttpClient httpClient;
 
+    @Value("${hospital.sender.phone:+91 7890100849}")
+    private String hospitalSenderPhone;
+
     @Value("${sms.provider:mock}")
     private String smsProvider;
 
@@ -38,7 +41,7 @@ public class SmsService {
     @Value("${twilio.auth-token:}")
     private String twilioAuthToken;
 
-    @Value("${twilio.from-phone:}")
+    @Value("${twilio.from-phone:+917890100849}")
     private String twilioFromPhone;
 
     @Value("${fast2sms.api-key:}")
@@ -54,8 +57,8 @@ public class SmsService {
     public void sendAppointmentBookingSms(Patient patient, Doctor doctor, String date, String time) {
         if (patient == null) return;
         String message = String.format(
-                "Hello %s, your appointment with Dr. %s (%s) is confirmed for %s at %s. - Sebasethu Hospital",
-                patient.getName(), doctor.getName(), doctor.getSpecialization(), date, time
+                "Hello %s, your appointment with Dr. %s (%s) is confirmed for %s at %s. Helpline: %s - Sebasethu Hospital",
+                patient.getName(), doctor.getName(), doctor.getSpecialization(), date, time, hospitalSenderPhone
         );
         dispatchSms(patient, "BOOKING_CONFIRMATION", message);
     }
@@ -63,8 +66,8 @@ public class SmsService {
     public void sendAppointmentCompletedSms(Patient patient, Doctor doctor, String date) {
         if (patient == null) return;
         String message = String.format(
-                "Hello %s, your consultation with Dr. %s on %s has been marked as COMPLETED. Thank you for visiting Sebasethu Hospital.",
-                patient.getName(), doctor != null ? doctor.getName() : "your doctor", date
+                "Hello %s, your consultation with Dr. %s on %s is COMPLETED. For follow-up queries, contact %s. - Sebasethu Hospital",
+                patient.getName(), doctor != null ? doctor.getName() : "your doctor", date, hospitalSenderPhone
         );
         dispatchSms(patient, "APPOINTMENT_COMPLETED", message);
     }
@@ -72,8 +75,8 @@ public class SmsService {
     public void sendBedAssignedSms(Patient patient, String wardName, String bedNumber) {
         if (patient == null) return;
         String message = String.format(
-                "Hello %s, you have been assigned to %s, Bed Number: %s at Sebasethu Hospital. Please visit the care desk for check-in.",
-                patient.getName(), wardName, bedNumber
+                "Hello %s, you have been assigned to %s, Bed Number: %s. Report to nursing desk or call %s. - Sebasethu Hospital",
+                patient.getName(), wardName, bedNumber, hospitalSenderPhone
         );
         dispatchSms(patient, "BED_ASSIGNED", message);
     }
@@ -89,8 +92,8 @@ public class SmsService {
         String notesPart = (notes != null && !notes.isBlank()) ? " | Advice: " + notes : "";
 
         String message = String.format(
-                "Hello %s, Dr. %s issued your prescription. Rx: [%s]%s. Get well soon! - Sebasethu Hospital",
-                patient.getName(), doctor != null ? doctor.getName() : "Consultant", medsSummary, notesPart
+                "Hello %s, Dr. %s issued your prescription. Rx: [%s]%s. Pharmacy helpline: %s - Sebasethu Hospital",
+                patient.getName(), doctor != null ? doctor.getName() : "Consultant", medsSummary, notesPart, hospitalSenderPhone
         );
         dispatchSms(patient, "PRESCRIPTION_ISSUED", message);
     }
@@ -98,8 +101,8 @@ public class SmsService {
     public void sendBillingSms(Patient patient, String invoiceNumber, double amount, String description, String status) {
         if (patient == null) return;
         String message = String.format(
-                "Hello %s, invoice %s for Rs. %.2f (%s) status: %s. - Sebasethu Hospital",
-                patient.getName(), invoiceNumber, amount, description, status
+                "Hello %s, invoice %s for Rs. %.2f (%s) status: %s. Billing desk: %s - Sebasethu Hospital",
+                patient.getName(), invoiceNumber, amount, description, status, hospitalSenderPhone
         );
         dispatchSms(patient, "BILLING_INVOICE", message);
     }
@@ -126,20 +129,21 @@ public class SmsService {
             }
 
             log.info("\n================== SMS DISPATCHED ==================\n" +
+                            "From: {} (Sebasethu Hospital)\n" +
                             "To: {} ({})\n" +
                             "Type: {}\n" +
                             "Status: {}\n" +
                             "Message: {}\n" +
                             "====================================================",
-                    phone, name, type, status, message);
+                    hospitalSenderPhone, phone, name, type, status, message);
 
         } catch (Exception e) {
-            log.error("Failed to send real SMS to {}: {}", phone, e.getMessage());
+            log.error("Failed to send SMS to {}: {}", phone, e.getMessage());
             status = "FAILED: " + e.getMessage();
         }
 
         try {
-            SmsNotification notification = new SmsNotification(patient, phone, name, type, message, status);
+            SmsNotification notification = new SmsNotification(patient, hospitalSenderPhone, phone, name, type, message, status);
             smsRepository.save(notification);
         } catch (Exception e) {
             log.error("Failed to save SMS log: {}", e.getMessage());
@@ -148,8 +152,7 @@ public class SmsService {
 
     private boolean isTwilioConfigured() {
         return twilioAccountSid != null && !twilioAccountSid.isBlank()
-                && twilioAuthToken != null && !twilioAuthToken.isBlank()
-                && twilioFromPhone != null && !twilioFromPhone.isBlank();
+                && twilioAuthToken != null && !twilioAuthToken.isBlank();
     }
 
     private boolean isFast2SmsConfigured() {
@@ -183,7 +186,6 @@ public class SmsService {
     }
 
     private void sendViaFast2Sms(String toPhone, String message) throws Exception {
-        // Clean phone number (strip +91 or spaces for Indian numbers)
         String cleanPhone = toPhone.replaceAll("[^0-9]", "");
         if (cleanPhone.startsWith("91") && cleanPhone.length() == 12) {
             cleanPhone = cleanPhone.substring(2);
@@ -215,4 +217,3 @@ public class SmsService {
         return smsRepository.findByPatient_IdOrderBySentAtDesc(patientId);
     }
 }
-
