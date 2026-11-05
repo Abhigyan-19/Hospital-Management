@@ -23,11 +23,13 @@ public class BedService {
     private final BedRepository bedRepository;
     private final WardRepository wardRepository;
     private final PatientRepository patientRepository;
+    private final SmsService smsService;
 
-    public BedService(BedRepository bedRepository, WardRepository wardRepository, PatientRepository patientRepository) {
+    public BedService(BedRepository bedRepository, WardRepository wardRepository, PatientRepository patientRepository, SmsService smsService) {
         this.bedRepository = bedRepository;
         this.wardRepository = wardRepository;
         this.patientRepository = patientRepository;
+        this.smsService = smsService;
     }
 
     @Transactional(readOnly = true)
@@ -65,7 +67,12 @@ public class BedService {
         }
         bed.setPatient(patient);
         bed.setStatus(BedStatus.OCCUPIED);
-        return toResponse(bedRepository.save(bed));
+        Bed saved = bedRepository.save(bed);
+
+        // Send SMS notification for assigned ward and bed
+        smsService.sendBedAssignedSms(patient, bed.getWard().getName(), bed.getBedNumber());
+
+        return toResponse(saved);
     }
 
     @Transactional
@@ -86,7 +93,7 @@ public class BedService {
         }
         Bed bed = getBed(bedId);
         if (bed.getStatus() == BedStatus.OCCUPIED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Release the bed before changing its status.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Release the patient before changing status.");
         }
         bed.setStatus(status);
         return toResponse(bedRepository.save(bed));
@@ -96,7 +103,7 @@ public class BedService {
     public void deleteBed(Long id) {
         Bed bed = getBed(id);
         if (bed.getStatus() == BedStatus.OCCUPIED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Release the bed before deleting it.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Occupied beds cannot be deleted.");
         }
         bedRepository.delete(bed);
     }
@@ -107,14 +114,14 @@ public class BedService {
     }
 
     private BedResponse toResponse(Bed bed) {
-        Patient patient = bed.getPatient();
         return new BedResponse(
                 bed.getId(),
                 bed.getBedNumber(),
                 bed.getStatus(),
                 bed.getWard().getId(),
                 bed.getWard().getName(),
-                patient == null ? null : patient.getId(),
-                patient == null ? null : patient.getName());
+                bed.getPatient() != null ? bed.getPatient().getId() : null,
+                bed.getPatient() != null ? bed.getPatient().getName() : null
+        );
     }
 }

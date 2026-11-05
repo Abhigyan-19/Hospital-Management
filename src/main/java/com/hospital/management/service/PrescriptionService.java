@@ -24,17 +24,20 @@ public class PrescriptionService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final AppointmentRepository appointmentRepository;
+    private final SmsService smsService;
 
     public PrescriptionService(
             PrescriptionRepository prescriptionRepository,
             PatientRepository patientRepository,
             DoctorRepository doctorRepository,
-            AppointmentRepository appointmentRepository) {
+            AppointmentRepository appointmentRepository,
+            SmsService smsService) {
 
         this.prescriptionRepository = prescriptionRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.appointmentRepository = appointmentRepository;
+        this.smsService = smsService;
     }
 
     public Prescription createPrescription(PrescriptionRequest request) {
@@ -100,7 +103,7 @@ public class PrescriptionService {
                         .map(medicineRequest -> {
 
                             PrescriptionMedicine medicine =
-                                    new PrescriptionMedicine();
+                                     new PrescriptionMedicine();
 
                             medicine.setName(medicineRequest.getName());
                             medicine.setDosage(medicineRequest.getDosage());
@@ -115,11 +118,15 @@ public class PrescriptionService {
 
         prescription.setMedicines(medicines);
 
-        return prescriptionRepository.save(prescription);
+        Prescription saved = prescriptionRepository.save(prescription);
+
+        // Send SMS notification with medicines and notes
+        smsService.sendPrescriptionSms(patient, doctor, saved.getMedicines(), saved.getNotes());
+
+        return saved;
     }
 
     public List<Prescription> getAllPrescriptions() {
         return prescriptionRepository.findAll();
     }
 }
-
