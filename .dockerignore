@@ -1,0 +1,10 @@
+.git
+.github
+target
+frontend/node_modules
+frontend/dist
+data
+*.log
+.vscode
+classes
+
