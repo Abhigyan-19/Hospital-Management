@@ -10,10 +10,25 @@ button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid #f0ad4e; outline-offset: 3px; }
 .surface-pattern { background-color: #f4f8fa; background-image: linear-gradient(135deg, rgba(23,156,145,.035) 25%, transparent 25%), linear-gradient(315deg, rgba(57,125,158,.025) 25%, transparent 25%); background-position: 0 0, 24px 24px; background-size: 48px 48px; }
+.print-document-only { display: none; }
+
+@media (max-width: 640px) {
+	.responsive-table { overflow: visible !important; }
+	.responsive-table table { display: block; min-width: 0 !important; width: 100%; }
+	.responsive-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+	.responsive-table tbody { display: block; }
+	.responsive-table tr { display: block; margin-bottom: 12px; border: 1px solid #dcecf5; border-radius: 12px; background: white; }
+	.responsive-table td { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid #e8f0f4; padding: 12px; text-align: right; }
+	.responsive-table td::before { content: attr(data-label); flex: 0 0 auto; max-width: 45%; color: #397d9e; font-weight: 800; text-align: left; }
+	.responsive-table td:last-child { border-bottom: 0; }
+}
 
 @media print {
-	body { background: white; }
-	body * { visibility: hidden; }
-	.printable-prescription, .printable-prescription * { visibility: visible; }
-	.printable-prescription { position: absolute; inset: 0; width: 100%; padding: 24px; }
+	@page { margin: 12mm; }
+	body { background: white !important; }
+	body * { visibility: hidden !important; }
+	.print-document, .print-document * { visibility: visible !important; }
+	.print-document { position: fixed !important; inset: 0 !important; display: block !important; width: 100% !important; max-height: none !important; overflow: visible !important; padding: 12mm !important; background: white !important; color: #14343b !important; }
+	.print-document-only { display: block !important; }
+	.print-document .no-print { display: none !important; }
 }
