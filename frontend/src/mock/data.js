@@ -7,9 +7,9 @@ export const mockPatients = [
 ];
 
 export const mockDoctors = [
-  { id: 201, name: 'Dr. Anika Sharma', specialization: 'Cardiology', experience: 14 },
-  { id: 202, name: 'Dr. Kabir Menon', specialization: 'Orthopaedics', experience: 9 },
-  { id: 203, name: 'Dr. Priya Rao', specialization: 'Paediatrics', experience: 12 },
+  { id: 201, name: 'Dr. Anika Sharma', specialization: 'Cardiology', experience: 14, qualification: 'MBBS, MD (Cardiology)', availability: ['Monday', 'Wednesday', 'Friday'], timings: '9:30 AM – 1:00 PM', consultationFee: 800 },
+  { id: 202, name: 'Dr. Kabir Menon', specialization: 'Orthopaedics', experience: 9, qualification: 'MBBS, MS (Orthopaedics)', availability: ['Tuesday', 'Thursday', 'Saturday'], timings: '10:00 AM – 2:00 PM', consultationFee: 700 },
+  { id: 203, name: 'Dr. Priya Rao', specialization: 'Paediatrics', experience: 12, qualification: 'MBBS, MD (Paediatrics)', availability: ['Monday', 'Tuesday', 'Thursday'], timings: '11:00 AM – 3:00 PM', consultationFee: 650 },
 ];
 
 export const mockDashboard = {
@@ -46,6 +46,6 @@ export const mockAppointments = [
 ];
 
 export const mockPrescriptions = [
-  { id: 501, patient: 'Maya Iyer', doctor: 'Dr. Anika Sharma', createdAt: '2026-09-18', medicines: [{ name: 'Amlodipine', dosage: '5 mg', frequency: 'Once daily', duration: '30 days' }], notes: 'Take after breakfast.' },
-  { id: 502, patient: 'Rohan Sharma', doctor: 'Dr. Kabir Menon', createdAt: '2026-09-17', medicines: [{ name: 'Calcium citrate', dosage: '500 mg', frequency: 'Twice daily', duration: '14 days' }], notes: 'Review after two weeks.' },
+  { id: 501, patient: 'Maya Iyer', doctor: 'Dr. Anika Sharma', createdAt: '2026-09-18', medicines: [{ name: 'Amlodipine', dosage: '5 mg', frequency: 'Once daily', duration: '30 days', patientInstructions: 'Take one tablet by mouth after breakfast each day, at about the same time.' }], notes: 'Take after breakfast.' },
+  { id: 502, patient: 'Rohan Sharma', doctor: 'Dr. Kabir Menon', createdAt: '2026-09-17', medicines: [{ name: 'Calcium citrate', dosage: '500 mg', frequency: 'Twice daily', duration: '14 days', patientInstructions: 'Take one tablet after breakfast and one after dinner each day.' }], notes: 'Review after two weeks.' },
 ];

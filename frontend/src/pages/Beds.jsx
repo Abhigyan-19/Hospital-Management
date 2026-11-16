@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { bedService } from "../api/bedService";
+import { apiErrorMessage } from "../api/errorMessage";
 import {
   Badge,
   Button,
@@ -39,6 +40,7 @@ const statusTone = {
   OCCUPIED: "info",
   MAINTENANCE: "warning",
 };
+const pageSize = 10;
 
 export default function Beds() {
   const [beds, setBeds] = useState([]);
@@ -46,7 +48,9 @@ export default function Beds() {
   const [patients, setPatients] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [wardOpen, setWardOpen] = useState(false);
   const [bedOpen, setBedOpen] = useState(false);
   const [assigningBed, setAssigningBed] = useState(null);
@@ -58,6 +62,7 @@ export default function Beds() {
 
   const loadData = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const [nextBeds, nextWards, nextPatients] = await Promise.all([
         bedService.listBeds(),
@@ -68,7 +73,9 @@ export default function Beds() {
       setWards(nextWards);
       setPatients(nextPatients);
     } catch (error) {
-      toast.error(errorMessage(error, "Unable to load beds and wards."));
+      const message = apiErrorMessage(error, "Bed and ward information could not be loaded.");
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -91,6 +98,8 @@ export default function Beds() {
       }),
     [beds, search, statusFilter],
   );
+  const pageCount = Math.max(1, Math.ceil(filteredBeds.length / pageSize));
+  const visibleBeds = filteredBeds.slice((page - 1) * pageSize, page * pageSize);
 
   const summary = {
     total: beds.length,
@@ -346,7 +355,7 @@ export default function Beds() {
             <div className="w-full sm:w-64">
               <SearchBox
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => { setSearch(event.target.value); setPage(1); }}
                 placeholder="Search beds, wards, patients"
               />
             </div>
@@ -354,7 +363,7 @@ export default function Beds() {
               aria-label="Filter by bed status"
               className={fieldClass}
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+              onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}
             >
               <option value="ALL">All statuses</option>
               <option value="AVAILABLE">Available</option>
@@ -363,6 +372,7 @@ export default function Beds() {
             </select>
           </div>
         </div>
+        {loadError && <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4"><p className="font-bold text-danger">{loadError}</p><Button variant="secondary" className="mt-3" onClick={loadData} disabled={loading}>Try again</Button></div>}
         {loading ? (
           <div className="space-y-3 py-6">
             <Skeleton className="h-12 w-full" />
@@ -376,7 +386,7 @@ export default function Beds() {
             </EmptyState>
           </div>
         ) : (
-          <div className="mt-4 overflow-x-auto">
+          <div className="responsive-table mt-4 overflow-x-auto">
             <table className="w-full min-w-[760px] text-left">
               <thead>
                 <tr className="border-b border-navy-100 text-sm text-navy-500">
@@ -388,26 +398,26 @@ export default function Beds() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBeds.map((bed) => (
+                {visibleBeds.map((bed) => (
                   <tr
                     key={bed.id}
                     className="border-b border-navy-100 last:border-0"
                   >
-                    <td className="px-3 py-4 font-extrabold">
+                    <td data-label="Bed" className="px-3 py-4 font-extrabold">
                       {bed.bedNumber}
                     </td>
-                    <td className="px-3 py-4">{bed.wardName}</td>
-                    <td className="px-3 py-4">
+                    <td data-label="Ward" className="px-3 py-4">{bed.wardName}</td>
+                    <td data-label="Patient" className="px-3 py-4">
                       {bed.patientName || (
                         <span className="text-navy-500">Unassigned</span>
                       )}
                     </td>
-                    <td className="px-3 py-4">
+                    <td data-label="Status" className="px-3 py-4">
                       <Badge tone={statusTone[bed.status]}>
                         {statusLabel[bed.status]}
                       </Badge>
                     </td>
-                    <td className="px-3 py-4">
+                    <td data-label="Actions" className="px-3 py-4">
                       <div className="flex justify-end gap-1">
                         {bed.status === "AVAILABLE" && (
                           <>
@@ -468,6 +478,7 @@ export default function Beds() {
             </table>
           </div>
         )}
+        {!loading && !loadError && filteredBeds.length > 0 && <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-bold text-navy-700">Page {page} of {pageCount}</p><div className="flex gap-2"><Button variant="secondary" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</Button><Button variant="secondary" disabled={page >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>Next</Button></div></div>}
       </Card>
 
       <Modal
