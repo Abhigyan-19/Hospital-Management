@@ -152,7 +152,7 @@ export default function Prescriptions() {
             setOpen(false);
 
             toast.success(
-                'Prescription created successfully.'
+                'Prescription created successfully & SMS sent to patient!'
             );
 
         } catch (error) {

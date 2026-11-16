@@ -136,7 +136,7 @@ export default function Appointments() {
       setForm(emptyForm);
       setFormOpen(false);
 
-      toast.success('Appointment scheduled.');
+      toast.success('Appointment scheduled & confirmation SMS sent to patient.');
 
     } catch (error) {
 
@@ -169,7 +169,9 @@ export default function Appointments() {
       );
 
       toast.success(
-        `Appointment marked ${status.toLowerCase()}.`
+        status.toLowerCase() === 'completed'
+          ? 'Appointment marked completed & completion SMS sent to patient!'
+          : `Appointment marked ${status.toLowerCase()}.`
       );
 
     } catch (error) {

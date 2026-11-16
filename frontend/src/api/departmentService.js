@@ -1,7 +1,7 @@
-import { mockDepartments } from '../mock/data';
+import api from './axios';
 
-let departments = [...mockDepartments];
 export const departmentService = {
-  list: () => Promise.resolve(departments),
-  create: (department) => { const created = { ...department, id: Date.now() }; departments = [...departments, created]; return Promise.resolve(created); },
+  list: () => api.get('/departments').then(({ data }) => data),
+  create: (department) => api.post('/departments', department).then(({ data }) => data),
+  remove: (id) => api.delete(`/departments/${id}`),
 };

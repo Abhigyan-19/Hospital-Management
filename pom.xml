@@ -51,6 +51,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- PostgreSQL Database Driver (for Neon / Production) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- 6. Lombok
              Generates getters, setters, constructors etc. -->
         <dependency>

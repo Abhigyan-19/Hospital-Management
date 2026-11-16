@@ -144,7 +144,7 @@ export default function Beds() {
       );
       setAssigningBed(null);
       setPatientId("");
-      toast.success("Patient assigned to bed.");
+      toast.success("Patient assigned to bed & SMS notification sent with ward/bed details!");
     } catch (error) {
       toast.error(errorMessage(error, "Unable to assign patient."));
     }

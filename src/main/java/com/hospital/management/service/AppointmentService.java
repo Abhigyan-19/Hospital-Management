@@ -17,15 +17,18 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    private final SmsService smsService;
 
     public AppointmentService(
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
-            DoctorRepository doctorRepository) {
+            DoctorRepository doctorRepository,
+            SmsService smsService) {
 
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
+        this.smsService = smsService;
     }
 
     // Get all appointments
@@ -70,7 +73,17 @@ public class AppointmentService {
                 "Scheduled"
         );
 
-        return appointmentRepository.save(appointment);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+
+        // Dispatch Booking Confirmation SMS to Patient
+        smsService.sendAppointmentBookingSms(
+                patient,
+                doctor,
+                savedAppointment.getDate(),
+                savedAppointment.getTime()
+        );
+
+        return savedAppointment;
     }
 
     // Update appointment status
@@ -107,6 +120,17 @@ public class AppointmentService {
                 );
         }
 
-        return appointmentRepository.save(appointment);
+        Appointment updated = appointmentRepository.save(appointment);
+
+        // If appointment completed, send completion SMS
+        if ("completed".equalsIgnoreCase(normalizedStatus)) {
+            smsService.sendAppointmentCompletedSms(
+                    updated.getPatient(),
+                    updated.getDoctor(),
+                    updated.getDate()
+            );
+        }
+
+        return updated;
     }
 }
