@@ -1,12 +1,23 @@
 package com.hospital.management.dto;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public class PrescriptionRequest {
 
+    @NotNull(message = "Patient ID is required")
     private Long patientId;
+
+    @NotNull(message = "Doctor ID is required")
     private Long doctorId;
+
     private String notes;
+
+    @NotEmpty(message = "At least one medicine must be prescribed")
+    @Valid
     private List<MedicineRequest> medicines;
 
     public PrescriptionRequest() {
@@ -46,10 +57,19 @@ public class PrescriptionRequest {
 
     public static class MedicineRequest {
 
+        @NotBlank(message = "Medicine name is required")
         private String name;
+
+        @NotBlank(message = "Dosage is required")
         private String dosage;
+
+        @NotBlank(message = "Frequency is required")
         private String frequency;
+
+        @NotBlank(message = "Duration is required")
         private String duration;
+
+        private String patientInstructions;
 
         public MedicineRequest() {
         }
@@ -84,6 +104,14 @@ public class PrescriptionRequest {
 
         public void setDuration(String duration) {
             this.duration = duration;
+        }
+
+        public String getPatientInstructions() {
+            return patientInstructions;
+        }
+
+        public void setPatientInstructions(String patientInstructions) {
+            this.patientInstructions = patientInstructions;
         }
     }
 }

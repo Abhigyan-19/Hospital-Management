@@ -4,6 +4,8 @@
 -- ==========================================================
 
 -- Clean up existing tables if re-initializing
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
+DROP TABLE IF EXISTS app_users CASCADE;
 DROP TABLE IF EXISTS sms_notification CASCADE;
 DROP TABLE IF EXISTS bills CASCADE;
 DROP TABLE IF EXISTS prescription_medicines CASCADE;
@@ -118,4 +120,26 @@ CREATE TABLE sms_notification (
     status VARCHAR(50) NOT NULL DEFAULT 'SENT',
     sent_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_sms_patient FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE SET NULL
+);
+
+-- 11. Application Users Table (Spring Security & RBAC)
+CREATE TABLE app_users (
+    id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    doctor_id BIGINT REFERENCES doctor(id) ON DELETE SET NULL,
+    patient_id BIGINT REFERENCES patient(id) ON DELETE SET NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    approval_status VARCHAR(50) NOT NULL DEFAULT 'APPROVED',
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Refresh Tokens Table
+CREATE TABLE refresh_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    expiry_date TIMESTAMP WITH TIME ZONE NOT NULL
 );

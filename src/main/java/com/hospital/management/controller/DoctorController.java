@@ -2,6 +2,8 @@ package com.hospital.management.controller;
 
 import com.hospital.management.entity.Doctor;
 import com.hospital.management.service.DoctorService;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,26 +18,26 @@ public class DoctorController {
         this.doctorService = doctorService;
     }
 
-    // Create doctor
-    @PostMapping
-    public Doctor createDoctor(@RequestBody Doctor doctor) {
-        return doctorService.createDoctor(doctor);
-    }
-
-    // Get all doctors
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'PATIENT')")
     public List<Doctor> getAllDoctors() {
         return doctorService.getAllDoctors();
     }
 
-    // Get doctor by ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'PATIENT')")
     public Doctor getDoctorById(@PathVariable Long id) {
         return doctorService.getDoctorById(id);
     }
 
-    // Delete doctor
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Doctor createDoctor(@Valid @RequestBody Doctor doctor) {
+        return doctorService.createDoctor(doctor);
+    }
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteDoctor(@PathVariable Long id) {
         doctorService.deleteDoctor(id);
     }

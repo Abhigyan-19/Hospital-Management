@@ -3,6 +3,7 @@ package com.hospital.management.repository;
 import com.hospital.management.entity.Appointment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
@@ -14,15 +15,13 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             String status
     );
 
-    // MAIN AUTHORIZATION QUERY
     Optional<Appointment> findByPatient_IdAndDoctor_IdAndStatus(
             Long patientId,
             Long doctorId,
             String status
     );
 
-    // DIAGNOSTIC QUERIES
-    Optional<Appointment> findByPatient_Id(Long patientId);
+    List<Appointment> findByPatient_Id(Long patientId);
 
-    Optional<Appointment> findByDoctor_Id(Long doctorId);
+    List<Appointment> findByDoctor_Id(Long doctorId);
 }

@@ -1,17 +1,15 @@
 package com.hospital.management.service;
 
 import com.hospital.management.dto.PrescriptionRequest;
-import com.hospital.management.entity.Doctor;
-import com.hospital.management.entity.Patient;
-import com.hospital.management.entity.Prescription;
-import com.hospital.management.entity.PrescriptionMedicine;
+import com.hospital.management.entity.*;
+import com.hospital.management.exception.ResourceNotFoundException;
 import com.hospital.management.repository.AppointmentRepository;
 import com.hospital.management.repository.DoctorRepository;
 import com.hospital.management.repository.PatientRepository;
 import com.hospital.management.repository.PrescriptionRepository;
-import org.springframework.http.HttpStatus;
+import com.hospital.management.security.CustomUserDetails;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,83 +38,72 @@ public class PrescriptionService {
         this.smsService = smsService;
     }
 
-    public Prescription createPrescription(PrescriptionRequest request) {
+    public List<Prescription> getAllPrescriptions() {
+        return prescriptionRepository.findAll();
+    }
 
-        // Find patient
+    public List<Prescription> getPrescriptionsForUser(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return List.of();
+        }
+        Role role = userDetails.getUser().getRole();
+        if (role == Role.ADMIN) {
+            return prescriptionRepository.findAll();
+        } else if (role == Role.DOCTOR) {
+            Long doctorId = userDetails.getDoctorId();
+            return doctorId != null ? prescriptionRepository.findByDoctor_Id(doctorId) : List.of();
+        } else if (role == Role.PATIENT) {
+            Long patientId = userDetails.getPatientId();
+            return patientId != null ? prescriptionRepository.findByPatient_Id(patientId) : List.of();
+        }
+        return List.of();
+    }
+
+    public Prescription createPrescription(PrescriptionRequest request, CustomUserDetails userDetails) {
+        if (userDetails != null && userDetails.getUser().getRole() == Role.DOCTOR) {
+            if (userDetails.getDoctorId() == null || !userDetails.getDoctorId().equals(request.getDoctorId())) {
+                throw new AccessDeniedException("Doctors can only issue prescriptions under their own ID.");
+            }
+        }
+
         Patient patient = patientRepository.findById(request.getPatientId())
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Patient not found"
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + request.getPatientId()));
 
-        // Find doctor
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Doctor not found"
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + request.getDoctorId()));
 
-        /*
-         * ============================================================
-         * PRESCRIPTION AUTHORIZATION
-         * ============================================================
-         *
-         * A doctor can prescribe medicine to a patient only if
-         * the doctor has a completed appointment with that patient.
-         */
-
-        Optional<com.hospital.management.entity.Appointment> completedAppointment =
+        Optional<Appointment> completedAppointment =
                 appointmentRepository.findByPatient_IdAndDoctor_IdAndStatus(
                         patient.getId(),
                         doctor.getId(),
                         "Completed"
                 );
 
-        if (completedAppointment.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Doctor does not have a completed appointment with this patient"
-            );
+        if (completedAppointment.isEmpty() && (userDetails == null || userDetails.getUser().getRole() != Role.ADMIN)) {
+            throw new AccessDeniedException("Doctor does not have a completed appointment with this patient.");
         }
 
-        /*
-         * ============================================================
-         * CREATE PRESCRIPTION
-         * ============================================================
-         */
-
         Prescription prescription = new Prescription();
-
         prescription.setPatient(patient);
         prescription.setDoctor(doctor);
         prescription.setNotes(request.getNotes());
         prescription.setCreatedAt(LocalDateTime.now());
 
-        // Add medicines
-        List<PrescriptionMedicine> medicines =
-                request.getMedicines()
-                        .stream()
-                        .map(medicineRequest -> {
-
-                            PrescriptionMedicine medicine =
-                                     new PrescriptionMedicine();
-
-                            medicine.setName(medicineRequest.getName());
-                            medicine.setDosage(medicineRequest.getDosage());
-                            medicine.setFrequency(medicineRequest.getFrequency());
-                            medicine.setDuration(medicineRequest.getDuration());
-
-                            medicine.setPrescription(prescription);
-
-                            return medicine;
-                        })
-                        .toList();
-
-        prescription.setMedicines(medicines);
+        if (request.getMedicines() != null) {
+            List<PrescriptionMedicine> medicines = request.getMedicines().stream()
+                    .map(mReq -> {
+                        PrescriptionMedicine medicine = new PrescriptionMedicine();
+                        medicine.setName(mReq.getName());
+                        medicine.setDosage(mReq.getDosage());
+                        medicine.setFrequency(mReq.getFrequency());
+                        medicine.setDuration(mReq.getDuration());
+                        medicine.setPatientInstructions(mReq.getPatientInstructions());
+                        medicine.setPrescription(prescription);
+                        return medicine;
+                    })
+                    .toList();
+            prescription.setMedicines(medicines);
+        }
 
         Prescription saved = prescriptionRepository.save(prescription);
 
@@ -124,9 +111,5 @@ public class PrescriptionService {
         smsService.sendPrescriptionSms(patient, doctor, saved.getMedicines(), saved.getNotes());
 
         return saved;
-    }
-
-    public List<Prescription> getAllPrescriptions() {
-        return prescriptionRepository.findAll();
     }
 }

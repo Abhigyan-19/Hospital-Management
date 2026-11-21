@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
-import { setAccessToken } from '../api/axios';
+import { setAccessToken, setRefreshToken } from '../api/axios';
 import { getDemoUser, isDemoMode } from '../api/demoAuth';
 
 const AuthContext = createContext(null);
@@ -34,6 +34,7 @@ export function AuthProvider({ children }) {
     const expireSession = () => {
       setUser(null);
       setAccessToken(null);
+      setRefreshToken(null);
       localStorage.removeItem('sebasethu-demo-session');
       navigate('/login', { replace: true, state: { sessionExpired: true } });
       toast.error('Your session expired. Please sign in again.');
@@ -57,6 +58,7 @@ export function AuthProvider({ children }) {
       expiryTimer = window.setTimeout(() => {
         setUser(null);
         setAccessToken(null);
+        setRefreshToken(null);
         localStorage.removeItem('sebasethu-demo-session');
         navigate('/login', { replace: true, state: { sessionExpired: true } });
         toast.error('You were signed out after 30 minutes of inactivity.');
@@ -74,11 +76,15 @@ export function AuthProvider({ children }) {
   }, [user, navigate]);
 
   const login = async (credentials) => {
-    const response = normalizeSession(await authService.login(credentials));
+    const rawResponse = await authService.login(credentials);
+    const response = normalizeSession(rawResponse);
     if (response.user.role !== credentials.role) {
       throw new Error('The selected account type does not match this account.');
     }
     setAccessToken(response.token);
+    if (rawResponse.refreshToken) {
+      setRefreshToken(rawResponse.refreshToken);
+    }
     setUser(response.user);
     return response.user;
   };
@@ -94,6 +100,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setUser(null);
     setAccessToken(null);
+    setRefreshToken(null);
     localStorage.removeItem('sebasethu-demo-session');
     navigate('/login', { replace: true });
   };

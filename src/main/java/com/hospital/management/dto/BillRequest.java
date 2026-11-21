@@ -1,9 +1,21 @@
 package com.hospital.management.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class BillRequest {
+
+    @NotNull(message = "Patient ID is required")
     private Long patientId;
+
+    @NotNull(message = "Amount is required")
+    @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private Double amount;
+
+    @NotBlank(message = "Description is required")
     private String description;
+
     private String status;
 
     public BillRequest() {
@@ -48,4 +60,3 @@ public class BillRequest {
         this.status = status;
     }
 }
-

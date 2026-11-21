@@ -3,6 +3,8 @@ package com.hospital.management.controller;
 import com.hospital.management.dto.WardRequest;
 import com.hospital.management.entity.Ward;
 import com.hospital.management.service.WardService;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,16 +20,19 @@ public class WardController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
     public List<Ward> getAllWards() {
         return wardService.getAllWards();
     }
 
     @PostMapping
-    public Ward createWard(@RequestBody WardRequest request) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+    public Ward createWard(@Valid @RequestBody WardRequest request) {
         return wardService.createWard(request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteWard(@PathVariable Long id) {
         wardService.deleteWard(id);
     }
