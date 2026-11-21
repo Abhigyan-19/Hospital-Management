@@ -80,6 +80,10 @@ public class DoctorAvailabilityService {
     }
 
     public void validateDoctorAvailable(Long doctorId, String date, String time) {
+        if (doctorId == null || date == null || date.isBlank()) {
+            return;
+        }
+
         Optional<DoctorAvailability> optionalAv = availabilityRepository.findByDoctor_Id(doctorId);
         if (optionalAv.isEmpty()) {
             return; // If no custom availability record exists, default open schedule applies
@@ -89,31 +93,37 @@ public class DoctorAvailabilityService {
 
         // 1. Check leave dates
         List<String> leaves = av.getLeaveDatesList();
-        if (leaves != null && leaves.contains(date)) {
+        if (leaves != null && leaves.contains(date.trim())) {
             throw new IllegalArgumentException("Doctor is on scheduled leave on " + date + ".");
         }
 
-        // 2. Check day of week
+        // 2. Check day of week (separate date parsing from business validation)
+        LocalDate appointmentDate = null;
         try {
-            LocalDate appointmentDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
+            appointmentDate = LocalDate.parse(date.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (DateTimeParseException e) {
+            log.warn("Could not parse appointment date for availability validation: {}", date);
+        }
+
+        if (appointmentDate != null) {
             String dayOfWeek = appointmentDate.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
             List<String> workingDays = av.getWorkingDaysList();
             if (workingDays != null && !workingDays.isEmpty() && !workingDays.contains(dayOfWeek)) {
                 throw new IllegalArgumentException("Doctor is not scheduled to consult on " + dayOfWeek + "s.");
             }
-        } catch (DateTimeParseException e) {
-            log.warn("Could not parse appointment date for availability validation: {}", date);
         }
 
-        // 3. Check time bounds
+        // 3. Check consultation time bounds
         if (time != null && !time.isBlank()) {
+            String requestedTime = time.trim();
             String start = av.getStartTime();
             String end = av.getEndTime();
-            if (start != null && !start.isBlank() && time.compareTo(start) < 0) {
-                throw new IllegalArgumentException("Requested time " + time + " is earlier than doctor's start time (" + start + ").");
+
+            if (start != null && !start.isBlank() && requestedTime.compareTo(start.trim()) < 0) {
+                throw new IllegalArgumentException("Requested time " + requestedTime + " is earlier than doctor's start time (" + start + ").");
             }
-            if (end != null && !end.isBlank() && time.compareTo(end) >= 0) {
-                throw new IllegalArgumentException("Requested time " + time + " is after doctor's consultation hours end (" + end + ").");
+            if (end != null && !end.isBlank() && requestedTime.compareTo(end.trim()) >= 0) {
+                throw new IllegalArgumentException("Requested time " + requestedTime + " is after doctor's consultation hours end (" + end + ").");
             }
         }
     }
