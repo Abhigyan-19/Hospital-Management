@@ -33,4 +33,16 @@ export const patientPortalService = {
     isDemoMode()
       ? Promise.resolve(demoListInvoices(patientId))
       : api.get(`/patients/me/linked/${patientId}/invoices`).then(({ data }) => data),
+
+  downloadInvoicePdf: (patientId, invoiceId, invoiceNumber) =>
+    api.get(`/patients/me/linked/${patientId}/invoices/${invoiceId}/pdf`, { responseType: 'blob' }).then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Invoice-${invoiceNumber || invoiceId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    }),
 };

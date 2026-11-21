@@ -108,7 +108,7 @@ export default function PatientRecords({ type = 'history' }) {
           <div className="space-y-3">{records.map((invoice) => (
             <article key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-navy-100 p-4">
               <div><h3 className="font-extrabold">{invoice.description || invoice.invoiceNumber || 'Invoice'}</h3><p className="mt-1 text-sm text-navy-700">{invoice.invoiceNumber} · {invoice.date}</p><p className="mt-2 font-bold">₹{Number(invoice.amount || invoice.total || 0).toLocaleString('en-IN')}</p></div>
-              <div className="flex items-center gap-3"><Badge tone={invoice.status === 'Paid' || invoice.status === 'PAID' ? 'success' : 'warning'}>{invoice.status || 'Payment status unavailable'}</Badge><Button variant="secondary" onClick={() => { setPrintTarget({ kind: 'invoice', record: invoice }); window.setTimeout(() => window.print(), 0); }}><Printer size={17} />Print invoice</Button></div>
+              <div className="flex items-center gap-3"><Badge tone={invoice.status === 'Paid' || invoice.status === 'PAID' ? 'success' : 'warning'}>{invoice.status || 'Payment status unavailable'}</Badge><Button variant="secondary" onClick={() => patientPortalService.downloadInvoicePdf(selectedId, invoice.id, invoice.invoiceNumber)}><FileDown size={17} />Download PDF</Button><Button variant="secondary" onClick={() => { setPrintTarget({ kind: 'invoice', record: invoice }); window.setTimeout(() => window.print(), 0); }}><Printer size={17} />Print invoice</Button></div>
             </article>
           ))}</div>
         )}

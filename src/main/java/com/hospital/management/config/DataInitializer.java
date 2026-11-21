@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Configuration
@@ -18,6 +19,7 @@ public class DataInitializer {
                                        PatientRepository patientRepository,
                                        DoctorAvailabilityRepository availabilityRepository,
                                        MedicalRecordRepository medicalRecordRepository,
+                                       BillRepository billRepository,
                                        PasswordEncoder passwordEncoder) {
         return args -> {
             // Seed sample patient if none
@@ -71,6 +73,31 @@ public class DataInitializer {
                         "Recommended lifestyle modification, reduced sodium intake, and 30 minutes daily aerobic exercise."
                 );
                 medicalRecordRepository.save(record);
+            }
+
+            // Seed sample itemized bill if none
+            if (billRepository.count() == 0) {
+                Bill bill = new Bill();
+                bill.setInvoiceNumber("INV-1001");
+                bill.setPatient(samplePatient);
+                bill.setDescription("Cardiology consultation and baseline diagnostics");
+                bill.setStatus("PAID");
+                bill.setPaymentMethod("UPI");
+                bill.setPaidAt(LocalDateTime.now().minusHours(2));
+                bill.setCreatedAt(LocalDateTime.now().minusHours(3));
+                bill.setTaxRate(0.18);
+
+                bill.addItem(new BillItem(bill, "Specialist Doctor Consultation", 1, 500.00));
+                bill.addItem(new BillItem(bill, "12-Lead Electrocardiogram (ECG)", 1, 600.00));
+                bill.addItem(new BillItem(bill, "Complete Blood Count (CBC) Panel", 1, 400.00));
+
+                double subtotal = 1500.00;
+                double tax = 270.00;
+                bill.setSubtotal(subtotal);
+                bill.setTaxAmount(tax);
+                bill.setAmount(1770.00);
+
+                billRepository.save(bill);
             }
 
             // Seed default users if table empty

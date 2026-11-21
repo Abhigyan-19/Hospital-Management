@@ -4,6 +4,7 @@
 -- ==========================================================
 
 -- Clean up existing tables if re-initializing
+DROP TABLE IF EXISTS bill_items CASCADE;
 DROP TABLE IF EXISTS doctor_availability CASCADE;
 DROP TABLE IF EXISTS medical_record CASCADE;
 DROP TABLE IF EXISTS audit_log CASCADE;
@@ -108,11 +109,27 @@ CREATE TABLE bills (
     id BIGSERIAL PRIMARY KEY,
     invoice_number VARCHAR(100) NOT NULL UNIQUE,
     patient_id BIGINT NOT NULL,
+    subtotal NUMERIC(10, 2),
+    tax_rate NUMERIC(5, 4) DEFAULT 0.18,
+    tax_amount NUMERIC(10, 2) DEFAULT 0.00,
     amount NUMERIC(10, 2) NOT NULL,
     description TEXT NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    payment_method VARCHAR(50),
+    paid_at TIMESTAMP WITHOUT TIME ZONE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_bill_patient FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE CASCADE
+);
+
+-- 9b. Bill Items Table (Itemized Billing)
+CREATE TABLE bill_items (
+    id BIGSERIAL PRIMARY KEY,
+    bill_id BIGINT NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    unit_price NUMERIC(10, 2) NOT NULL,
+    total_price NUMERIC(10, 2) NOT NULL,
+    CONSTRAINT fk_bill_items_bill FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE
 );
 
 -- 10. SMS Notification Log Table

@@ -1,16 +1,21 @@
 package com.hospital.management.controller;
 
 import com.hospital.management.dto.BillRequest;
+import com.hospital.management.dto.PaymentRequest;
 import com.hospital.management.entity.Bill;
 import com.hospital.management.security.CustomUserDetails;
 import com.hospital.management.service.AuditLogService;
 import com.hospital.management.service.BillService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +43,19 @@ public class BillController {
         return bills;
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'PATIENT')")
+    public Bill getBillById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) {
+
+        Bill bill = billService.getBillById(id);
+        auditLogService.recordLog(userDetails, "READ", "BILL", bill.getInvoiceNumber(),
+                "Viewed bill " + bill.getInvoiceNumber(), request);
+        return bill;
+    }
+
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST') or (hasRole('PATIENT') and principal.patientId == #patientId)")
     public List<Bill> getBillsForPatient(
@@ -60,7 +78,7 @@ public class BillController {
 
         Bill bill = billService.createBill(request);
         auditLogService.recordLog(userDetails, "CREATE", "BILL", bill.getInvoiceNumber(),
-                "Generated invoice " + bill.getInvoiceNumber() + " for ₹" + bill.getAmount() + " (Patient #" + bill.getPatient().getId() + ")", servletRequest);
+                "Generated itemized invoice " + bill.getInvoiceNumber() + " for ₹" + bill.getAmount() + " (Patient #" + bill.getPatient().getId() + ")", servletRequest);
         return bill;
     }
 
@@ -77,5 +95,31 @@ public class BillController {
         auditLogService.recordLog(userDetails, "UPDATE", "BILL", updated.getInvoiceNumber(),
                 "Updated status of invoice " + updated.getInvoiceNumber() + " to " + status, servletRequest);
         return updated;
+    }
+
+    @PatchMapping("/{id}/payment")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+    public Bill recordPayment(
+            @PathVariable Long id,
+            @RequestBody PaymentRequest paymentRequest,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest servletRequest) {
+
+        Bill updated = billService.recordPayment(id, paymentRequest.getPaymentMethod());
+        auditLogService.recordLog(userDetails, "PAYMENT", "BILL", updated.getInvoiceNumber(),
+                "Recorded " + updated.getPaymentMethod() + " payment for invoice " + updated.getInvoiceNumber() + " (₹" + updated.getAmount() + ")", servletRequest);
+        return updated;
+    }
+
+    @GetMapping("/{id}/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST') or (hasRole('PATIENT') and @billService.getBillById(#id).patient.id == principal.patientId)")
+    public ResponseEntity<byte[]> downloadInvoicePdf(@PathVariable Long id) throws IOException {
+        Bill bill = billService.getBillById(id);
+        byte[] pdfBytes = billService.getInvoicePdfBytes(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Invoice-" + bill.getInvoiceNumber() + ".pdf\"")
+                .body(pdfBytes);
     }
 }

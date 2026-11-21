@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Printer, Plus, ReceiptText } from 'lucide-react';
+import { Printer, Plus, ReceiptText, FileDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { appointmentService } from '../api/appointmentService';
 import { billingService } from '../api/billingService';
@@ -112,7 +112,7 @@ export default function ReceptionBilling() {
             return (
               <article key={invoice.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-navy-100 p-4">
                 <div><h3 className="font-extrabold">{invoice.invoiceNumber || 'Invoice'} · {patient?.name || 'Patient'}</h3><p className="mt-1 text-sm text-navy-700">{invoice.description} · {invoice.date}</p><p className="mt-2 text-lg font-black">₹{Number(invoice.amount || invoice.total || 0).toLocaleString('en-IN')}</p>{invoice.paymentMethod && <p className="text-sm text-navy-500">Payment: {invoice.paymentMethod}</p>}</div>
-                <div className="flex flex-wrap items-center gap-2"><Badge tone={paid ? 'success' : 'warning'}>{invoice.status || 'Pending'}</Badge>{!paid && <Button variant="secondary" onClick={() => setPaymentTarget(invoice)}>Mark paid</Button>}<Button variant="secondary" onClick={() => printInvoice(invoice, patient?.name || 'Patient')}><Printer size={17} />{paid ? 'Print receipt' : 'Print invoice'}</Button></div>
+                <div className="flex flex-wrap items-center gap-2"><Badge tone={paid ? 'success' : 'warning'}>{invoice.status || 'Pending'}</Badge>{!paid && <Button variant="secondary" onClick={() => setPaymentTarget(invoice)}>Mark paid</Button>}<Button variant="secondary" onClick={() => billingService.downloadPdf(invoice.id, invoice.invoiceNumber)}><FileDown size={17} />Download PDF</Button><Button variant="secondary" onClick={() => printInvoice(invoice, patient?.name || 'Patient')}><Printer size={17} />{paid ? 'Print receipt' : 'Print invoice'}</Button></div>
               </article>
             );
           })}</div>
