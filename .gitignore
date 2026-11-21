@@ -17,6 +17,7 @@ target/
 
 # Java
 *.class
+classes/
 
 # Local H2 database
 /data/
