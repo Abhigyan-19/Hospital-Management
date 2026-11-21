@@ -3,7 +3,11 @@ package com.hospital.management.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "appointments")
+@Table(name = "appointments", indexes = {
+        @Index(name = "idx_app_doctor_date_time", columnList = "doctor_id, date, time"),
+        @Index(name = "idx_app_patient_status", columnList = "patient_id, status"),
+        @Index(name = "idx_app_date_status", columnList = "date, status")
+})
 public class Appointment {
 
     @Id

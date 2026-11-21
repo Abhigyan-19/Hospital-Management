@@ -1,11 +1,11 @@
 package com.hospital.management.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "doctor", indexes = {
+        @Index(name = "idx_doctor_specialization", columnList = "specialization")
+})
 public class Doctor {
 
     @Id
