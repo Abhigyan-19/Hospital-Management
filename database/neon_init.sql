@@ -4,6 +4,7 @@
 -- ==========================================================
 
 -- Clean up existing tables if re-initializing
+DROP TABLE IF EXISTS audit_log CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS app_users CASCADE;
 DROP TABLE IF EXISTS sms_notification CASCADE;
@@ -142,4 +143,18 @@ CREATE TABLE refresh_tokens (
     token VARCHAR(255) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
     expiry_date TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+-- 13. Audit Log Table (HIPAA/DPDP Clinical Accountability)
+CREATE TABLE audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT,
+    actor_name VARCHAR(255),
+    role VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    entity VARCHAR(50) NOT NULL,
+    entity_id VARCHAR(100),
+    summary TEXT,
+    ip_address VARCHAR(100),
+    timestamp TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
