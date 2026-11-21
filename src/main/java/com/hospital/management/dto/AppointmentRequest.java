@@ -20,6 +20,13 @@ public class AppointmentRequest {
     public AppointmentRequest() {
     }
 
+    public AppointmentRequest(Long patientId, Long doctorId, String date, String time) {
+        this.patientId = patientId;
+        this.doctorId = doctorId;
+        this.date = date;
+        this.time = time;
+    }
+
     public Long getPatientId() {
         return patientId;
     }

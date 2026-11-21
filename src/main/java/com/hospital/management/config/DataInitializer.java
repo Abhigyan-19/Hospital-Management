@@ -99,10 +99,10 @@ public class DataInitializer {
                 Ward icu = wardRepository.save(new Ward("Intensive Care Unit (ICU)", "General Medicine", 3));
                 Ward gmw = wardRepository.save(new Ward("General Medical Ward", "General Medicine", 1));
 
-                bedRepository.save(new Bed("CCU-01", "OCCUPIED", ccu, patientBanerjee));
-                bedRepository.save(new Bed("CCU-02", "AVAILABLE", ccu, null));
-                bedRepository.save(new Bed("ICU-01", "AVAILABLE", icu, null));
-                bedRepository.save(new Bed("GMW-01", "AVAILABLE", gmw, null));
+                bedRepository.save(new Bed("CCU-01", BedStatus.OCCUPIED, ccu, patientBanerjee));
+                bedRepository.save(new Bed("CCU-02", BedStatus.AVAILABLE, ccu, null));
+                bedRepository.save(new Bed("ICU-01", BedStatus.AVAILABLE, icu, null));
+                bedRepository.save(new Bed("GMW-01", BedStatus.AVAILABLE, gmw, null));
                 log.info("Initialized default wards and beds.");
             }
 

@@ -48,6 +48,13 @@ public class Bed {
         this.status = BedStatus.AVAILABLE;
     }
 
+    public Bed(String bedNumber, BedStatus status, Ward ward, Patient patient) {
+        this.bedNumber = bedNumber;
+        this.status = status != null ? status : BedStatus.AVAILABLE;
+        this.ward = ward;
+        this.patient = patient;
+    }
+
     public Long getId() {
         return id;
     }

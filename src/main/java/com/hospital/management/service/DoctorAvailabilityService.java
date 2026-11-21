@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
@@ -100,7 +101,7 @@ public class DoctorAvailabilityService {
             if (workingDays != null && !workingDays.isEmpty() && !workingDays.contains(dayOfWeek)) {
                 throw new IllegalArgumentException("Doctor is not scheduled to consult on " + dayOfWeek + "s.");
             }
-        } catch (Exception e) {
+        } catch (DateTimeParseException e) {
             log.warn("Could not parse appointment date for availability validation: {}", date);
         }
 

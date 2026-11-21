@@ -85,10 +85,6 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-        </dependency>
 
         <!-- OpenAPI / Swagger API Documentation -->
         <dependency>
@@ -139,7 +135,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-
                 <configuration>
                     <excludes>
                         <exclude>
@@ -148,7 +143,15 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
 
+            <!-- Maven Surefire Plugin with modern JVM agent loading support -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-XX:+EnableDynamicAgentLoading -Dnet.bytebuddy.experimental=true</argLine>
+                </configuration>
             </plugin>
 
         </plugins>

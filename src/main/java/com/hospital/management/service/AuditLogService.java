@@ -29,6 +29,23 @@ public class AuditLogService {
         this.auditLogRepository = auditLogRepository;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordLog(CustomUserDetails userDetails,
+                          String action,
+                          String entity,
+                          String entityId,
+                          String summary) {
+        HttpServletRequest currentRequest = null;
+        try {
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                currentRequest = attrs.getRequest();
+            }
+        } catch (Exception ignored) {
+        }
+        recordLog(userDetails, action, entity, entityId, summary, currentRequest);
+    }
+
     /**
      * Records an audit log entry in a separate transaction so that audit failures
      * never roll back primary clinical business logic.

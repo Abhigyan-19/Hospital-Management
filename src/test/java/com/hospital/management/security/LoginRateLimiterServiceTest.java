@@ -16,42 +16,41 @@ class LoginRateLimiterServiceTest {
     }
 
     @Test
-    @DisplayName("Should allow login attempts when count is under limit")
-    void isBlocked_UnderLimit_ReturnsFalse() {
+    @DisplayName("Should allow initial 5 login attempts within window")
+    void isAllowed_UnderLimit_ReturnsTrue() {
         String clientIp = "192.168.1.100";
-        assertThat(rateLimiterService.isBlocked(clientIp)).isFalse();
 
-        rateLimiterService.recordFailedAttempt(clientIp);
-        rateLimiterService.recordFailedAttempt(clientIp);
-        rateLimiterService.recordFailedAttempt(clientIp);
-        rateLimiterService.recordFailedAttempt(clientIp);
-
-        assertThat(rateLimiterService.isBlocked(clientIp)).isFalse();
+        // First 5 attempts must be allowed
+        for (int i = 0; i < 5; i++) {
+            assertThat(rateLimiterService.isAllowed(clientIp)).isTrue();
+        }
     }
 
     @Test
-    @DisplayName("Should block client IP after 5 failed attempts")
-    void isBlocked_AfterFiveFailures_ReturnsTrue() {
+    @DisplayName("Should block client IP on 6th attempt within window")
+    void isAllowed_AfterMaxAttempts_ReturnsFalse() {
         String clientIp = "192.168.1.101";
 
         for (int i = 0; i < 5; i++) {
-            rateLimiterService.recordFailedAttempt(clientIp);
+            rateLimiterService.isAllowed(clientIp);
         }
 
-        assertThat(rateLimiterService.isBlocked(clientIp)).isTrue();
+        // 6th attempt must be blocked
+        assertThat(rateLimiterService.isAllowed(clientIp)).isFalse();
     }
 
     @Test
-    @DisplayName("Should unblock client IP when login succeeds")
-    void resetAttempts_UnblocksIp() {
+    @DisplayName("Should reset attempt count on successful authentication")
+    void reset_UnblocksIp() {
         String clientIp = "192.168.1.102";
 
         for (int i = 0; i < 5; i++) {
-            rateLimiterService.recordFailedAttempt(clientIp);
+            rateLimiterService.isAllowed(clientIp);
         }
-        assertThat(rateLimiterService.isBlocked(clientIp)).isTrue();
+        assertThat(rateLimiterService.isAllowed(clientIp)).isFalse();
 
-        rateLimiterService.resetAttempts(clientIp);
-        assertThat(rateLimiterService.isBlocked(clientIp)).isFalse();
+        // Successful login resets tracker
+        rateLimiterService.reset(clientIp);
+        assertThat(rateLimiterService.isAllowed(clientIp)).isTrue();
     }
 }
