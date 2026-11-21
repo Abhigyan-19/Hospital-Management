@@ -20,14 +20,12 @@ public class DepartmentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'PATIENT')")
     public List<Department> getAllDepartments() {
         return departmentService.getAllDepartments();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR', 'PATIENT')")
-    public Department getDepartmentById(@PathVariable Long id) {
+    public Department getDoctorById(@PathVariable Long id) {
         return departmentService.getDepartmentById(id);
     }
 
