@@ -2,8 +2,20 @@ package com.hospital.management.doctor.repository;
 
 import com.hospital.management.doctor.entity.Doctor;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
+    java.util.Optional<Doctor> findByAccount_Id(Long accountId);
+
+    java.util.List<Doctor> findByApprovalStatusIgnoreCase(String approvalStatus);
+
+    boolean existsByAccount_Id(Long accountId);
+
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select doctor from Doctor doctor where doctor.id = :id")
+    java.util.Optional<Doctor> findByIdForUpdate(@Param("id") Long id);
 }
 
 // we don't need to write methods like saveDoctor() , getDoctor()..

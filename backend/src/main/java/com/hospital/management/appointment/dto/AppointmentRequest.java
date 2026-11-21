@@ -1,44 +1,15 @@
 package com.hospital.management.appointment.dto;
 
-public class AppointmentRequest {
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-    private Long patientId;
-    private Long doctorId;
-    private String date;
-    private String time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
-    public AppointmentRequest() {
-    }
-
-    public Long getPatientId() {
-        return patientId;
-    }
-
-    public void setPatientId(Long patientId) {
-        this.patientId = patientId;
-    }
-
-    public Long getDoctorId() {
-        return doctorId;
-    }
-
-    public void setDoctorId(Long doctorId) {
-        this.doctorId = doctorId;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
+public record AppointmentRequest(
+        @NotNull Long patientId,
+        @NotNull Long doctorId,
+        @NotNull LocalDate date,
+        @NotNull LocalTime time,
+        @Size(max = 1000) String reason) {
 }

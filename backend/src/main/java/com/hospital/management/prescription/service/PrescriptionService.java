@@ -2,6 +2,7 @@ package com.hospital.management.prescription.service;
 
 import com.hospital.management.prescription.dto.PrescriptionRequest;
 import com.hospital.management.appointment.entity.Appointment;
+import com.hospital.management.appointment.entity.AppointmentStatus;
 import com.hospital.management.doctor.entity.Doctor;
 import com.hospital.management.patient.entity.Patient;
 import com.hospital.management.prescription.entity.Prescription;
@@ -71,7 +72,7 @@ public class PrescriptionService {
                 appointmentRepository.findByPatient_IdAndDoctor_IdAndStatus(
                         patient.getId(),
                         doctor.getId(),
-                        "Completed"
+                        AppointmentStatus.COMPLETED
                 );
 
         if (completedAppointment.isEmpty()) {
@@ -123,4 +124,3 @@ public class PrescriptionService {
         return prescriptionRepository.findAll();
     }
 }
-

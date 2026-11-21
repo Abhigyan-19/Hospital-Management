@@ -2,6 +2,7 @@ const fallbackSlots = ['09:30', '11:00', '14:15', '16:00'];
 
 export function getDoctorTimeSlots(doctor, date) {
   if (!doctor || !date) return fallbackSlots;
+  if (doctor.availabilityConfigured === false) return [];
   const day = new Date(`${date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long' });
   if (doctor.workingDays?.length && !doctor.workingDays.includes(day)) return [];
   if (doctor.leaveDates?.includes(date)) return [];

@@ -1,44 +1,68 @@
 package com.hospital.management.patient.controller;
 
-import com.hospital.management.patient.entity.Patient;
+import com.hospital.management.patient.dto.LinkedPatientRequest;
+import com.hospital.management.patient.dto.PatientRequest;
+import com.hospital.management.patient.dto.PatientResponse;
 import com.hospital.management.patient.service.PatientService;
-import org.springframework.web.bind.annotation.*;
+import com.hospital.management.security.AuthenticatedUser;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8000", "http://127.0.0.1:8000"})
 @RestController
 @RequestMapping("/patients")
 public class PatientController {
-// @RestController tell spring to handle HTTP requests and returns data , usually JSON .
-// @RequestMapping gives the controller a common URL.
     private final PatientService patientService;
 
     public PatientController(PatientService patientService) {
         this.patientService = patientService;
     }
 
-    // Create patient
     @PostMapping
-    public Patient createPatient(@RequestBody Patient patient) {
-        return patientService.createPatient(patient);
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+    public PatientResponse createPatient(@Valid @RequestBody PatientRequest request) {
+        return patientService.createStaffPatient(request);
     }
 
-    // Get all patients
     @GetMapping
-    public List<Patient> getAllPatients() {
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+    public List<PatientResponse> getAllPatients() {
         return patientService.getAllPatients();
     }
 
-    // Get patient by ID
     @GetMapping("/{id}")
-    public Patient getPatientById(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+    public PatientResponse getPatientById(@PathVariable Long id) {
         return patientService.getPatientById(id);
     }
 
-    // Delete patient
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deletePatient(@PathVariable Long id) {
         patientService.deletePatient(id);
+    }
+
+    @GetMapping("/me/linked")
+    @PreAuthorize("hasRole('PATIENT')")
+    public List<PatientResponse> linkedPatients(@AuthenticationPrincipal AuthenticatedUser user) {
+        return patientService.getLinkedPatients(user);
+    }
+
+    @PostMapping("/me/linked")
+    @PreAuthorize("hasRole('PATIENT')")
+    public PatientResponse addLinkedPatient(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @Valid @RequestBody LinkedPatientRequest request) {
+        return patientService.addLinkedPatient(user, request);
     }
 }

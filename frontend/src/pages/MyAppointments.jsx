@@ -70,7 +70,7 @@ export default function MyAppointments() {
     Number(appointment.doctor?.id) === Number(form.doctorId) &&
     appointment.date === form.date &&
     appointment.time === form.time &&
-    appointment.status !== 'Cancelled',
+    !['Cancelled', 'Rejected', 'Completed'].includes(appointment.status),
   ), [appointments, form.doctorId, form.date, form.time]);
   const selectedDoctor = doctors.find((doctor) => Number(doctor.id) === Number(form.doctorId));
   const availableSlots = getDoctorTimeSlots(selectedDoctor, form.date);
@@ -159,7 +159,7 @@ export default function MyAppointments() {
       Number(item.doctor?.id) === Number(rescheduleTarget.doctor?.id) &&
       item.date === rescheduleForm.date &&
       item.time === rescheduleForm.time &&
-      item.status !== 'Cancelled',
+      !['Cancelled', 'Rejected', 'Completed'].includes(item.status),
     );
     if (conflict) return toast.error('That doctor appears booked for this time. Choose another slot.');
     setSubmitting(true);
@@ -176,7 +176,7 @@ export default function MyAppointments() {
   };
 
   const isUpcoming = (appointment) =>
-    appointment.date >= today && !['Cancelled', 'Completed'].includes(appointment.status);
+    appointment.date >= today && !['Cancelled', 'Rejected', 'Completed'].includes(appointment.status);
   const visibleAppointments = appointments.filter((appointment) =>
     appointmentView === 'upcoming' ? isUpcoming(appointment) : !isUpcoming(appointment),
   );

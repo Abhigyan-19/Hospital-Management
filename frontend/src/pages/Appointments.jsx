@@ -134,7 +134,7 @@ export default function Appointments() {
       appointment.doctor?.id === Number(form.doctorId) &&
       appointment.date === form.date &&
       appointment.time === form.time &&
-      appointment.status !== 'Cancelled'
+      !['Cancelled', 'Rejected', 'Completed'].includes(appointment.status)
     );
 
   }, [appointments, form.doctorId, form.date, form.time]);
@@ -473,7 +473,7 @@ export default function Appointments() {
                     </Badge>
 
 
-                    {appointment.status === 'Scheduled' && (
+                    {['Scheduled', 'Confirmed'].includes(appointment.status) && (
 
                       <>
 

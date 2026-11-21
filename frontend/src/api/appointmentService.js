@@ -52,6 +52,16 @@ export const appointmentService = {
             ? Promise.resolve(demoRescheduleStaffAppointment(id, changes))
             : api.patch(`/reception/appointments/${id}/reschedule`, changes).then(({ data }) => data),
 
+    approve: (id) =>
+        isDemoMode()
+            ? Promise.resolve(demoUpdateAppointment(id, 'Confirmed'))
+            : api.post(`/reception/appointments/${id}/approve`).then(({ data }) => data),
+
+    reject: (id, reason) =>
+        isDemoMode()
+            ? Promise.resolve(demoUpdateAppointment(id, 'Rejected'))
+            : api.post(`/reception/appointments/${id}/reject`, { reason }).then(({ data }) => data),
+
     updateStatus: (id, status) =>
         isDemoMode()
             ? Promise.resolve(demoUpdateAppointment(id, status))

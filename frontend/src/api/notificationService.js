@@ -19,4 +19,20 @@ export const notificationService = {
     }
     return notifications;
   },
+
+  async unreadCount() {
+    const result = isDemoMode()
+      ? { count: demoListNotifications().filter((item) => !item.read).length }
+      : (await api.get('/notifications/me/unread-count')).data;
+    if (!Number.isInteger(result?.count) || result.count < 0) {
+      throw new Error('The notification service returned an invalid unread count.');
+    }
+    return result.count;
+  },
+
+  async markRead(id) {
+    return isDemoMode()
+      ? { id, read: true }
+      : (await api.patch(`/notifications/me/${id}/read`)).data;
+  },
 };

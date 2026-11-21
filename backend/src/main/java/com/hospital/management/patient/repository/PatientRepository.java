@@ -5,5 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PatientRepository
         extends JpaRepository<Patient, Long> {
+    java.util.List<Patient> findByOwnerAccount_IdOrderByIdAsc(Long accountId);
+
+    java.util.Optional<Patient> findByIdAndOwnerAccount_Id(Long id, Long accountId);
 
 }

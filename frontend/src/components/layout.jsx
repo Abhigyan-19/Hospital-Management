@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { notificationService } from '../api/notificationService';
 import { apiErrorMessage } from '../api/errorMessage';
@@ -122,6 +123,7 @@ export function Topbar({ onMenu }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [notificationsError, setNotificationsError] = useState('');
   const current = links
@@ -134,8 +136,11 @@ export function Topbar({ onMenu }) {
   const loadNotifications = () => {
     setNotificationsLoading(true);
     setNotificationsError('');
-    notificationService.listMine()
-      .then(setNotifications)
+    Promise.all([notificationService.listMine(), notificationService.unreadCount()])
+      .then(([items, count]) => {
+        setNotifications(items);
+        setUnreadCount(count);
+      })
       .catch((error) => {
         const message = isDemoMode()
           ? error.message || 'Notifications could not be loaded.'
@@ -143,6 +148,25 @@ export function Topbar({ onMenu }) {
         setNotificationsError(message);
       })
       .finally(() => setNotificationsLoading(false));
+  };
+
+  useEffect(() => {
+    if (!user?.id) return;
+    notificationService.unreadCount()
+      .then(setUnreadCount)
+      .catch((error) => setNotificationsError(apiErrorMessage(error, 'Unread notifications could not be loaded.')));
+  }, [user?.id]);
+
+  const openNotification = (item) => {
+    setNotificationsOpen(false);
+    if (item.read) return;
+    notificationService.markRead(item.id)
+      .then(() => {
+        setNotifications((current) => current.map((notification) =>
+          notification.id === item.id ? { ...notification, read: true } : notification));
+        setUnreadCount((current) => Math.max(0, current - 1));
+      })
+      .catch((error) => toast.error(apiErrorMessage(error, 'The notification could not be marked as read.')));
   };
 
   useEffect(() => {
@@ -165,10 +189,10 @@ export function Topbar({ onMenu }) {
           <div className="hidden w-56 lg:block xl:w-72"><PageSearch user={user} query={query} setQuery={setQuery} onNavigate={closeSearch} id="workspace-search-desktop" /></div>
           <button className="grid h-11 w-11 place-items-center rounded-lg text-navy-700 hover:bg-navy-50 lg:hidden" onClick={() => setMobileSearchOpen((open) => !open)} aria-label={mobileSearchOpen ? 'Close global search' : 'Open global search'} aria-expanded={mobileSearchOpen}><Search size={21} aria-hidden="true" /></button>
           <div className="relative">
-            <button className="relative grid h-11 w-11 place-items-center rounded-lg text-navy-700 hover:bg-navy-50" onClick={() => setNotificationsOpen((open) => !open)} aria-label={`Notifications${notifications.length ? `, ${notifications.length} items` : ''}`} aria-expanded={notificationsOpen} aria-controls="notification-panel"><Bell size={21} aria-hidden="true" />{notifications.length > 0 && <span className="absolute right-1 top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-teal-700 px-1 text-xs font-black text-white" aria-hidden="true">{notifications.length > 9 ? '9+' : notifications.length}</span>}</button>
+            <button className="relative grid h-11 w-11 place-items-center rounded-lg text-navy-700 hover:bg-navy-50" onClick={() => setNotificationsOpen((open) => !open)} aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`} aria-expanded={notificationsOpen} aria-controls="notification-panel"><Bell size={21} aria-hidden="true" />{unreadCount > 0 && <span className="absolute right-1 top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-teal-700 px-1 text-xs font-black text-white" aria-hidden="true">{unreadCount > 9 ? '9+' : unreadCount}</span>}</button>
             {notificationsOpen && <section id="notification-panel" role="region" aria-label="Notifications" className="absolute right-0 top-full z-50 mt-2 w-[min(90vw,24rem)] rounded-2xl border border-navy-100 bg-white p-4 shadow-soft">
               <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold">Notifications</h2><button className="min-h-11 rounded-lg px-3 font-bold text-teal-700 hover:bg-teal-50" onClick={() => setNotificationsOpen(false)}>Close</button></div>
-              {notificationsLoading ? <p className="py-5 text-navy-700" aria-live="polite">Loading notifications…</p> : notificationsError ? <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3"><p className="text-sm font-bold text-danger">{notificationsError}</p><Button variant="secondary" className="mt-3" onClick={loadNotifications}>Try again</Button></div> : !notifications.length ? <p className="py-5 text-navy-700">You&apos;re all caught up. There are no new notifications.</p> : <ul className="mt-3 max-h-[60vh] space-y-2 overflow-y-auto">{notifications.map((item) => <li key={item.id}><Link to={item.href} onClick={() => setNotificationsOpen(false)} className="block rounded-xl border border-navy-100 p-3 hover:bg-teal-50"><p className="font-extrabold">{item.title}</p><p className="mt-1 text-sm leading-6 text-navy-700">{item.message}</p>{item.createdAt && <p className="mt-2 text-xs font-bold text-navy-500">{new Date(item.createdAt).toLocaleString()}</p>}</Link></li>)}</ul>}
+              {notificationsLoading ? <p className="py-5 text-navy-700" aria-live="polite">Loading notifications…</p> : notificationsError ? <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3"><p className="text-sm font-bold text-danger">{notificationsError}</p><Button variant="secondary" className="mt-3" onClick={loadNotifications}>Try again</Button></div> : !notifications.length ? <p className="py-5 text-navy-700">You&apos;re all caught up. There are no new notifications.</p> : <ul className="mt-3 max-h-[60vh] space-y-2 overflow-y-auto">{notifications.map((item) => <li key={item.id}><Link to={item.href} onClick={() => openNotification(item)} className={`block rounded-xl border border-navy-100 p-3 hover:bg-teal-50 ${item.read ? '' : 'bg-teal-50/50'}`}><p className="font-extrabold">{item.title}{!item.read && <span className="ml-2 text-xs text-teal-700">New</span>}</p><p className="mt-1 text-sm leading-6 text-navy-700">{item.message}</p>{item.createdAt && <p className="mt-2 text-xs font-bold text-navy-500">{new Date(item.createdAt).toLocaleString()}</p>}</Link></li>)}</ul>}
             </section>}
           </div>
           <div className="hidden h-9 w-px bg-navy-100 sm:block" />

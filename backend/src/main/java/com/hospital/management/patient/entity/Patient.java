@@ -1,9 +1,8 @@
 package com.hospital.management.patient.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hospital.management.security.UserAccount;
+import jakarta.persistence.*;
 
 @Entity
 public class Patient {
@@ -16,6 +15,14 @@ public class Patient {
     private int age;
     private String gender;
     private String phone;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_account_id")
+    @JsonIgnore
+    private UserAccount ownerAccount;
+
+    @Column(name = "relationship_to_account", length = 100)
+    private String relationshipToAccount;
 
     public Patient() {
     }
@@ -61,5 +68,21 @@ public class Patient {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public UserAccount getOwnerAccount() {
+        return ownerAccount;
+    }
+
+    public void setOwnerAccount(UserAccount ownerAccount) {
+        this.ownerAccount = ownerAccount;
+    }
+
+    public String getRelationshipToAccount() {
+        return relationshipToAccount;
+    }
+
+    public void setRelationshipToAccount(String relationshipToAccount) {
+        this.relationshipToAccount = relationshipToAccount;
     }
 }
