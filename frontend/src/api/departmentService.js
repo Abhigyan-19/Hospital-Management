@@ -1,7 +1,52 @@
 import api from './axios';
+import { mockDepartments, mockDoctors } from '../mock/data';
+import { isDemoMode } from './demoAuth';
+import { demoCreateDepartment, demoListDepartments, demoListDoctors } from '../mock/demoStore';
+
+const useMock = import.meta.env.VITE_USE_MOCK === 'true';
+let departments = [...mockDepartments];
 
 export const departmentService = {
-  list: () => api.get('/departments').then(({ data }) => data),
-  create: (department) => api.post('/departments', department).then(({ data }) => data),
-  remove: (id) => api.delete(`/departments/${id}`),
+  list: () =>
+    isDemoMode()
+      ? Promise.resolve(demoListDepartments())
+      : useMock
+      ? Promise.resolve(departments)
+      : api.get('/departments').then(({ data }) => data),
+
+  listDoctors: (department) =>
+    isDemoMode()
+      ? Promise.resolve(demoListDoctors().filter((doctor) => doctor.specialization?.toLowerCase() === department?.toLowerCase()))
+      : useMock
+      ? Promise.resolve(mockDoctors.filter((doctor) => doctor.specialization?.toLowerCase() === department?.toLowerCase()))
+      : api.get('/doctors').then(({ data }) =>
+          data.filter(
+            (doctor) =>
+              String(doctor.specialization || doctor.department?.name || '')
+                .trim()
+                .toLowerCase() === String(department || '').trim().toLowerCase(),
+          ),
+        ),
+
+  create: (department) =>
+    isDemoMode()
+      ? Promise.resolve(demoCreateDepartment(department))
+      : useMock
+      ? Promise.resolve().then(() => {
+          const created = { ...department, id: Date.now() };
+          departments = [...departments, created];
+          return created;
+        })
+      : api.post('/departments', department).then(({ data }) => data),
+
+  remove: (id) =>
+    isDemoMode()
+      ? Promise.resolve().then(() => {
+          departments = departments.filter((d) => d.id !== id);
+        })
+      : useMock
+      ? Promise.resolve().then(() => {
+          departments = departments.filter((d) => d.id !== id);
+        })
+      : api.delete(`/departments/${id}`),
 };

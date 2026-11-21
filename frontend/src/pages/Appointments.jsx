@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Check, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { apiErrorMessage } from '../api/errorMessage';
 import { appointmentService } from '../api/appointmentService';
-import api from '../api/axios';
+import { departmentService } from '../api/departmentService';
+import { doctorService } from '../api/doctorService';
+import { patientService } from '../api/patientService';
 
 import {
   Button,
@@ -11,13 +14,16 @@ import {
   EmptyState,
   Modal,
   SearchBox,
-  Badge
+  Badge,
+  ConfirmDialog,
+  Skeleton,
 } from '../components/ui';
 
 const today = new Date().toISOString().split('T')[0];
 
 const emptyForm = {
   patientId: '',
+  department: '',
   doctorId: '',
   date: today,
   time: '09:30'
@@ -30,31 +36,67 @@ export default function Appointments() {
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [departments, setDepartments] = useState([]);
 
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [directoryError, setDirectoryError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [view, setView] = useState('list');
+  const [pendingCancellation, setPendingCancellation] = useState(null);
 
-  // Load appointments, patients and doctors
-  useEffect(() => {
+  const loadData = async () => {
+    setLoading(true);
+    setError('');
+    setDirectoryError('');
+    const [appointmentResult, patientResult, doctorResult, departmentResult] = await Promise.allSettled([
+      Promise.resolve().then(() => appointmentService.list()),
+      Promise.resolve().then(() => patientService.list()),
+      Promise.resolve().then(() => doctorService.list()),
+      Promise.resolve().then(() => departmentService.list()),
+    ]);
 
-    appointmentService.list()
-      .then(setAppointments)
-      .catch(() => toast.error('Failed to load appointments.'));
+    if (appointmentResult.status === 'fulfilled') {
+      setAppointments(appointmentResult.value);
+      setLoadFailed(false);
+    } else {
+      const message = apiErrorMessage(appointmentResult.reason, 'Appointments could not be loaded.');
+      setError(message);
+      setLoadFailed(true);
+      toast.error(message);
+    }
 
-    api.get('/patients')
-      .then(({ data }) => setPatients(data))
-      .catch(() => toast.error('Failed to load patients.'));
+    const directoryFailures = [];
+    if (patientResult.status === 'fulfilled') setPatients(patientResult.value);
+    else directoryFailures.push(apiErrorMessage(patientResult.reason, 'Patient records are unavailable.'));
+    if (doctorResult.status === 'fulfilled') setDoctors(doctorResult.value);
+    else directoryFailures.push(apiErrorMessage(doctorResult.reason, 'The doctor directory is unavailable.'));
+    if (departmentResult.status === 'fulfilled') setDepartments(departmentResult.value);
+    else directoryFailures.push(apiErrorMessage(departmentResult.reason, 'Department information is unavailable.'));
+    if (directoryFailures.length) {
+      const message = directoryFailures.join(' ');
+      setDirectoryError(message);
+      toast.error(message);
+    }
+    setLoading(false);
+  };
 
-    api.get('/doctors')
-      .then(({ data }) => setDoctors(data))
-      .catch(() => toast.error('Failed to load doctors.'));
+  useEffect(() => { loadData(); }, []);
 
-  }, []);
+  const departmentDoctors = useMemo(
+    () => doctors.filter((doctor) =>
+      String(doctor.specialization || doctor.department?.name || '').toLowerCase() === form.department.toLowerCase(),
+    ),
+    [doctors, form.department],
+  );
 
   // Search appointments
-  const visible = useMemo(() => {
+  const filtered = useMemo(() => {
 
     return appointments.filter((appointment) => {
 
@@ -75,6 +117,11 @@ export default function Appointments() {
     });
 
   }, [appointments, search]);
+  const pageSize = 5;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => { setPage((current) => Math.min(current, pageCount)); }, [pageCount]);
 
   // Check whether selected doctor's slot is already booked
   const booked = useMemo(() => {
@@ -119,6 +166,8 @@ export default function Appointments() {
       );
     }
 
+    setSaving(true);
+    setError('');
     try {
 
       const created = await appointmentService.create({
@@ -135,52 +184,58 @@ export default function Appointments() {
 
       setForm(emptyForm);
       setFormOpen(false);
+      setPage(1);
 
       toast.success('Appointment scheduled & confirmation SMS sent to patient.');
 
-    } catch (error) {
-
-      console.error(error);
-
-      toast.error(
-        error.response?.data?.message ||
-        'Failed to schedule appointment.'
-      );
+    } catch (requestError) {
+      const message = apiErrorMessage(requestError, 'The appointment could not be scheduled.');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Update appointment status
   const changeStatus = async (appointment, status) => {
-
+    if (status === 'Cancelled') {
+      setPendingCancellation(appointment);
+      return;
+    }
+    setSaving(true);
+    setError('');
     try {
-
-      const updated =
-        await appointmentService.updateStatus(
-          appointment.id,
-          status
-        );
-
-      setAppointments((current) =>
-        current.map((item) =>
-          item.id === updated.id
-            ? updated
-            : item
-        )
-      );
-
+      const updated = await appointmentService.updateStatus(appointment.id, status);
+      setAppointments((current) => current.map((item) => item.id === updated.id ? updated : item));
       toast.success(
         status.toLowerCase() === 'completed'
           ? 'Appointment marked completed & completion SMS sent to patient!'
           : `Appointment marked ${status.toLowerCase()}.`
       );
+    } catch (requestError) {
+      const message = apiErrorMessage(requestError, 'Appointment status could not be updated.');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    } catch (error) {
-
-      console.error(error);
-
-      toast.error(
-        'Failed to update appointment status.'
-      );
+  const confirmCancellation = async () => {
+    if (!pendingCancellation) return;
+    setSaving(true);
+    setError('');
+    try {
+      const updated = await appointmentService.updateStatus(pendingCancellation.id, 'Cancelled');
+      setAppointments((current) => current.map((item) => item.id === updated.id ? updated : item));
+      setPendingCancellation(null);
+      toast.success('Appointment cancelled.');
+    } catch (requestError) {
+      const message = apiErrorMessage(requestError, 'The appointment was not cancelled.');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -214,6 +269,15 @@ export default function Appointments() {
 
       </div>
 
+      {error && <div role="alert"><Card className="border-red-200 bg-red-50">
+        <p className="font-bold text-danger">{error}</p>
+        {loadFailed && <Button variant="secondary" className="mt-4" onClick={loadData} disabled={loading}>Try again</Button>}
+      </Card></div>}
+
+      {directoryError && <div role="alert"><Card className="border-amber-200 bg-amber-50">
+        <p className="font-bold text-warning">{directoryError}</p>
+        <Button variant="secondary" className="mt-4" onClick={loadData} disabled={loading}>Retry booking data</Button>
+      </Card></div>}
 
       {/* Main Card */}
 
@@ -248,9 +312,7 @@ export default function Appointments() {
 
             <SearchBox
               value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
+              onChange={(event) => { setSearch(event.target.value); setPage(1); }}
               placeholder="Search appointments"
             />
 
@@ -261,7 +323,11 @@ export default function Appointments() {
 
         {/* Calendar view */}
 
-        {view === 'calendar' ? (
+        {loading ? <div className="space-y-3 py-6" aria-label="Loading appointments">
+          {[1, 2, 3].map((item) => <Skeleton key={item} className="h-20 w-full" />)}
+        </div> : loadFailed ? <div className="py-8">
+          <EmptyState title="Appointments are unavailable">Try again to reload the appointment list.</EmptyState>
+        </div> : view === 'calendar' ? (
 
           <div className="grid gap-3 py-6 sm:grid-cols-3">
 
@@ -277,7 +343,7 @@ export default function Appointments() {
                 dateObject.toISOString().split('T')[0];
 
               const dayAppointments =
-                visible.filter(
+                filtered.filter(
                   (appointment) =>
                     appointment.date === date
                 );
@@ -340,7 +406,7 @@ export default function Appointments() {
 
           /* List view */
 
-          visible.length === 0 ? (
+          filtered.length === 0 ? (
 
             <div className="py-8">
 
@@ -418,6 +484,7 @@ export default function Appointments() {
                         <Button
                           variant="secondary"
                           className="px-3"
+                          disabled={saving}
                           onClick={() =>
                             changeStatus(
                               appointment,
@@ -432,6 +499,7 @@ export default function Appointments() {
                         <Button
                           variant="ghost"
                           className="px-3 text-danger"
+                          disabled={saving}
                           onClick={() =>
                             changeStatus(
                               appointment,
@@ -459,6 +527,14 @@ export default function Appointments() {
 
         )}
 
+        {!loading && !loadFailed && view === 'list' && filtered.length > 0 && <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-navy-100 pt-4">
+          <p className="text-sm font-bold text-navy-700">Page {page} of {pageCount} · {filtered.length} appointments</p>
+          <div className="flex gap-2">
+            <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</Button>
+            <Button variant="secondary" disabled={page >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>Next</Button>
+          </div>
+        </div>}
+
       </Card>
 
 
@@ -467,13 +543,14 @@ export default function Appointments() {
       <Modal
         open={formOpen}
         title="Book appointment"
-        onClose={() => setFormOpen(false)}
+        onClose={() => !saving && setFormOpen(false)}
       >
 
         <form
           onSubmit={submit}
           className="space-y-4"
         >
+          {directoryError && <p role="alert" className="rounded-lg bg-amber-50 p-3 font-bold text-warning">{directoryError}</p>}
 
           {/* Patient */}
 
@@ -484,6 +561,7 @@ export default function Appointments() {
             </span>
 
             <select
+              required
               className="min-h-11 w-full rounded-lg border border-navy-100 bg-white px-4"
               value={form.patientId}
               onChange={(event) =>
@@ -514,6 +592,24 @@ export default function Appointments() {
           </label>
 
 
+          {/* Department */}
+          <label className="block">
+            <span className="mb-2 block font-bold">Department</span>
+            <select
+              required
+              className="min-h-11 w-full rounded-lg border border-navy-100 bg-white px-4"
+              value={form.department}
+              onChange={(event) =>
+                setForm({ ...form, department: event.target.value, doctorId: '' })
+              }
+            >
+              <option value="">Select department first</option>
+              {departments.map((department) => (
+                <option key={department.id} value={department.name}>{department.name}</option>
+              ))}
+            </select>
+          </label>
+
           {/* Doctor */}
 
           <label className="block">
@@ -523,7 +619,9 @@ export default function Appointments() {
             </span>
 
             <select
+              required
               className="min-h-11 w-full rounded-lg border border-navy-100 bg-white px-4"
+              disabled={!form.department}
               value={form.doctorId}
               onChange={(event) =>
                 setForm({
@@ -534,10 +632,10 @@ export default function Appointments() {
             >
 
               <option value="">
-                Select doctor
+                {form.department ? 'Select doctor' : 'Select a department first'}
               </option>
 
-              {doctors.map((doctor) => (
+              {departmentDoctors.map((doctor) => (
 
                 <option
                   key={doctor.id}
@@ -565,6 +663,7 @@ export default function Appointments() {
 
               <input
                 type="date"
+                required
                 className="min-h-11 w-full rounded-lg border border-navy-100 bg-white px-4"
                 value={form.date}
                 onChange={(event) =>
@@ -585,6 +684,7 @@ export default function Appointments() {
               </span>
 
               <select
+                required
                 className="min-h-11 w-full rounded-lg border border-navy-100 bg-white px-4"
                 value={form.time}
                 onChange={(event) =>
@@ -642,14 +742,24 @@ export default function Appointments() {
           <Button
             type="submit"
             className="w-full"
-            disabled={booked}
+            disabled={booked || saving || Boolean(directoryError)}
           >
-            Confirm appointment
+            {saving ? 'Saving…' : 'Confirm appointment'}
           </Button>
 
         </form>
 
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(pendingCancellation)}
+        title="Cancel this appointment?"
+        message={pendingCancellation ? `Cancel the appointment for ${pendingCancellation.patient?.name || 'this patient'} with ${pendingCancellation.doctor?.name || 'this doctor'} on ${pendingCancellation.date} at ${pendingCancellation.time}?` : ''}
+        confirmLabel="Cancel appointment"
+        confirmDisabled={saving}
+        onClose={() => !saving && setPendingCancellation(null)}
+        onConfirm={confirmCancellation}
+      />
 
     </div>
   );
