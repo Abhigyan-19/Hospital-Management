@@ -4,6 +4,7 @@ import com.hospital.management.dto.ConsultationRequest;
 import com.hospital.management.dto.MedicalRecordRequest;
 import com.hospital.management.dto.MedicalRecordResponse;
 import com.hospital.management.dto.PatientChartDto;
+import com.hospital.management.dto.PatientVisitHistoryDto;
 import com.hospital.management.entity.*;
 import com.hospital.management.exception.ResourceNotFoundException;
 import com.hospital.management.repository.*;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MedicalRecordService {
@@ -23,6 +25,7 @@ public class MedicalRecordService {
     private final DoctorRepository doctorRepository;
     private final AppointmentRepository appointmentRepository;
     private final PrescriptionRepository prescriptionRepository;
+    private final PatientVisitHistoryRepository patientVisitHistoryRepository;
     private final SmsService smsService;
     private final AuditLogService auditLogService;
 
@@ -32,6 +35,7 @@ public class MedicalRecordService {
             DoctorRepository doctorRepository,
             AppointmentRepository appointmentRepository,
             PrescriptionRepository prescriptionRepository,
+            PatientVisitHistoryRepository patientVisitHistoryRepository,
             SmsService smsService,
             AuditLogService auditLogService) {
         this.medicalRecordRepository = medicalRecordRepository;
@@ -39,6 +43,7 @@ public class MedicalRecordService {
         this.doctorRepository = doctorRepository;
         this.appointmentRepository = appointmentRepository;
         this.prescriptionRepository = prescriptionRepository;
+        this.patientVisitHistoryRepository = patientVisitHistoryRepository;
         this.smsService = smsService;
         this.auditLogService = auditLogService;
     }
@@ -186,14 +191,59 @@ public class MedicalRecordService {
         appointment.setStatus("Completed");
         Appointment completedAppointment = appointmentRepository.save(appointment);
 
-        // 4. Send consultation completed SMS (non-blocking)
+        // 4. Archive into Patient Visit History (longitudinal history for revisit consultations)
+        String prescriptionSummary = "";
+        if (request.isCreatePrescription() && request.getMedicines() != null && !request.getMedicines().isEmpty()) {
+            prescriptionSummary = request.getMedicines().stream()
+                    .map(m -> m.getName() + " " + m.getDosage() + " (" + m.getFrequency() + " for " + m.getDuration() + ")")
+                    .collect(Collectors.joining("; "));
+        }
+
+        PatientVisitHistory history = new PatientVisitHistory(
+                patient.getId(),
+                patient.getName(),
+                patient.getPhone(),
+                doctor.getId(),
+                doctor.getName(),
+                doctor.getSpecialization(),
+                completedAppointment.getId(),
+                completedAppointment.getDate(),
+                completedAppointment.getTime(),
+                request.getDiagnosis(),
+                request.getNotes(),
+                request.getNotes(),
+                prescriptionSummary,
+                ""
+        );
+        patientVisitHistoryRepository.save(history);
+
+        // 5. Send consultation completed SMS (non-blocking)
         smsService.sendAppointmentCompletedSms(patient, doctor, completedAppointment.getDate());
 
-        // 5. Audit log
+        // 6. Audit log
         auditLogService.recordLog(userDetails, "CONSULTATION_COMPLETED", "APPOINTMENT", String.valueOf(appointmentId),
                 "Consultation completed for patient #" + patient.getId() + " by Dr. " + doctor.getName() + " - Diagnosis: " + request.getDiagnosis());
 
         return MedicalRecordResponse.fromEntity(savedRecord);
+    }
+
+    public List<PatientVisitHistoryDto> getPatientVisitHistory(Long patientId, CustomUserDetails userDetails) {
+        validatePatientAccess(patientId, userDetails);
+        return patientVisitHistoryRepository.findByPatientIdOrderByCompletedAtDesc(patientId)
+                .stream()
+                .map(PatientVisitHistoryDto::fromEntity)
+                .toList();
+    }
+
+    public List<PatientVisitHistoryDto> searchPatientVisitHistory(String query, CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new AccessDeniedException("Authentication required.");
+        }
+        String cleanQuery = query != null ? query.trim() : "";
+        return patientVisitHistoryRepository.findByPatientNameContainingIgnoreCaseOrPatientPhoneContainingOrderByCompletedAtDesc(cleanQuery, cleanQuery)
+                .stream()
+                .map(PatientVisitHistoryDto::fromEntity)
+                .toList();
     }
 
     private void validatePatientAccess(Long patientId, CustomUserDetails userDetails) {

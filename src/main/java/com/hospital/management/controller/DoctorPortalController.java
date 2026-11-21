@@ -70,6 +70,22 @@ public class DoctorPortalController {
         return medicalRecordService.getPatientChart(patientId, userDetails);
     }
 
+    @GetMapping("/patients/{patientId}/history")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST')")
+    public List<PatientVisitHistoryDto> getPatientVisitHistory(
+            @PathVariable Long patientId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return medicalRecordService.getPatientVisitHistory(patientId, userDetails);
+    }
+
+    @GetMapping("/patients/history/search")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST')")
+    public List<PatientVisitHistoryDto> searchPatientVisitHistory(
+            @RequestParam String query,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return medicalRecordService.searchPatientVisitHistory(query, userDetails);
+    }
+
     @PostMapping("/appointments/{appointmentId}/consultation")
     @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     public MedicalRecordResponse saveConsultation(

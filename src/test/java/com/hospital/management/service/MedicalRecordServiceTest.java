@@ -37,6 +37,8 @@ class MedicalRecordServiceTest {
     @Mock
     private PrescriptionRepository prescriptionRepository;
     @Mock
+    private PatientVisitHistoryRepository patientVisitHistoryRepository;
+    @Mock
     private SmsService smsService;
     @Mock
     private AuditLogService auditLogService;

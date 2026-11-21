@@ -15,6 +15,9 @@ export default function DoctorConsultation() {
   const [appointments, setAppointments] = useState([]);
   const [selectedId, setSelectedId] = useState(routeAppointmentId || '');
   const [chart, setChart] = useState(null);
+  const [patientHistory, setPatientHistory] = useState([]);
+  const [historySearch, setHistorySearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const [form, setForm] = useState(emptyForm());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,10 +43,13 @@ export default function DoctorConsultation() {
   useEffect(() => {
     if (!appointment?.patient?.id) {
       setChart(null);
+      setPatientHistory([]);
       return;
     }
     setError('');
     setChart(null);
+    setPatientHistory([]);
+
     doctorPortalService.getPatientChart(appointment.patient.id)
       .then(setChart)
       .catch((requestError) => {
@@ -51,7 +57,22 @@ export default function DoctorConsultation() {
         setError(message);
         toast.error(message);
       });
+
+    doctorPortalService.getPatientHistory(appointment.patient.id)
+      .then((data) => setPatientHistory(data || []))
+      .catch(() => setPatientHistory([]));
   }, [appointment?.id, appointment?.patient?.id]);
+
+  const handleSearchHistory = async (e) => {
+    e.preventDefault();
+    if (!historySearch.trim()) return;
+    try {
+      const results = await doctorPortalService.searchPatientHistory(historySearch.trim());
+      setSearchResults(results || []);
+    } catch {
+      setSearchResults([]);
+    }
+  };
 
   const updateMedicine = (index, key, value) => setForm((current) => ({
     ...current,
@@ -108,7 +129,63 @@ export default function DoctorConsultation() {
             <>
               <Card>
                 <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-xl font-extrabold">{appointment.patient?.name || 'Patient'}</h3><p className="mt-1 text-navy-700">{appointment.date} at {appointment.time}</p></div><div className="flex flex-wrap gap-2"><Badge tone={appointment.status === 'Completed' ? 'success' : 'info'}>{appointment.status}</Badge><Link to={`/doctor/patients/${appointment.patient?.id}`}><Button variant="secondary">Open full chart</Button></Link></div></div>
-                {chart && <div className="mt-4 rounded-xl bg-navy-50 p-4"><p><strong>Allergies:</strong> {Array.isArray(chart.patient.allergies) && chart.patient.allergies.length ? chart.patient.allergies.join(', ') : chart.patient.allergies || 'None recorded'}</p><p className="mt-1"><strong>Recent history:</strong> {chart.medicalHistory[0]?.title || 'No previous notes'}</p><p className="mt-1"><strong>Recent prescriptions:</strong> {chart.prescriptions[0]?.medicines?.map((medicine) => medicine.name).join(', ') || 'None from your visits'}</p></div>}
+                {chart && <div className="mt-4 rounded-xl bg-navy-50 p-4"><p><strong>Allergies:</strong> {Array.isArray(chart.patient.allergies) && chart.patient.allergies.length ? chart.patient.allergies.join(', ') : chart.patient.allergies || 'None recorded'}</p><p className="mt-1"><strong>Blood Group:</strong> {chart.patient.bloodGroup || 'Not recorded'}</p></div>}
+              </Card>
+
+              {/* Patient Revisit Medical History & Connected Prescriptions */}
+              <Card className="border-teal-200 bg-teal-50/30">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-100 pb-3">
+                  <div>
+                    <h3 className="text-lg font-black text-ink flex items-center gap-2">
+                      <span>🩺 Patient Revisit History & Previous Treatments</span>
+                      {patientHistory.length > 0 ? (
+                        <Badge tone="success">{patientHistory.length} Past Visits</Badge>
+                      ) : (
+                        <Badge tone="info">First Visit</Badge>
+                      )}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-navy-600">
+                      Auto-archived previous complaints, clinical findings, treatment notes, and connected medicines.
+                    </p>
+                  </div>
+                </div>
+
+                {patientHistory.length === 0 ? (
+                  <div className="py-4 text-center text-sm text-navy-600">
+                    No previous completed visits found for {appointment.patient?.name || 'this patient'}. This is their initial consultation.
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {patientHistory.map((h, idx) => (
+                      <div key={h.id || idx} className="rounded-xl border border-teal-200/80 bg-white p-4 shadow-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-navy-50 pb-2">
+                          <p className="font-bold text-teal-800">
+                            Visit on {h.visitDate} {h.visitTime ? `at ${h.visitTime}` : ''}
+                          </p>
+                          <span className="text-xs font-semibold text-navy-500">
+                            Dr. {h.doctorName || 'Doctor'} {h.doctorSpecialization ? `(${h.doctorSpecialization})` : ''}
+                          </span>
+                        </div>
+                        <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+                          <div>
+                            <span className="font-bold text-navy-700">Previous Problem / Diagnosis:</span>
+                            <p className="mt-0.5 text-danger font-medium">{h.diagnosis || 'None recorded'}</p>
+                          </div>
+                          <div>
+                            <span className="font-bold text-navy-700">Previous Treatment & Notes:</span>
+                            <p className="mt-0.5 text-navy-800">{h.treatmentNotes || 'Consultation notes not recorded'}</p>
+                          </div>
+                        </div>
+                        {h.prescriptionsSummary && (
+                          <div className="mt-3 rounded-lg bg-teal-50/70 p-2.5 text-xs">
+                            <span className="font-bold text-teal-900">💊 Connected Prescriptions & Medicines:</span>
+                            <p className="mt-0.5 text-teal-950 font-medium">{h.prescriptionsSummary}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Card>
               {['Completed', 'Cancelled'].includes(appointment.status) ? <Card><EmptyState title="This appointment is closed">Completed or cancelled appointments cannot be edited in a consultation.</EmptyState></Card> : (
                 <Card>

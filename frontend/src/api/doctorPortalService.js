@@ -38,6 +38,12 @@ export const doctorPortalService = {
       ? Promise.resolve(demoGetDoctorPatientChart(patientId))
       : api.get(`/doctors/me/patients/${patientId}/chart`).then(({ data }) => data),
 
+  getPatientHistory: (patientId) =>
+    api.get(`/doctors/me/patients/${patientId}/history`).then(({ data }) => data).catch(() => []),
+
+  searchPatientHistory: (query) =>
+    api.get('/doctors/me/patients/history/search', { params: { query } }).then(({ data }) => data).catch(() => []),
+
   saveConsultation: (appointmentId, consultation) =>
     isDemoMode()
       ? Promise.resolve(demoSaveDoctorConsultation(appointmentId, consultation))
