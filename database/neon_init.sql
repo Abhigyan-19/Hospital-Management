@@ -4,6 +4,8 @@
 -- ==========================================================
 
 -- Clean up existing tables if re-initializing
+DROP TABLE IF EXISTS doctor_availability CASCADE;
+DROP TABLE IF EXISTS medical_record CASCADE;
 DROP TABLE IF EXISTS audit_log CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS app_users CASCADE;
@@ -24,7 +26,10 @@ CREATE TABLE patient (
     name VARCHAR(255) NOT NULL,
     age INTEGER NOT NULL,
     gender VARCHAR(50),
-    phone VARCHAR(50)
+    phone VARCHAR(50),
+    blood_group VARCHAR(20),
+    allergies VARCHAR(500),
+    emergency_contact VARCHAR(100)
 );
 
 -- 2. Doctors Table
@@ -93,6 +98,7 @@ CREATE TABLE prescription_medicines (
     dosage VARCHAR(100),
     frequency VARCHAR(100),
     duration VARCHAR(100),
+    patient_instructions VARCHAR(500),
     prescription_id BIGINT NOT NULL,
     CONSTRAINT fk_pm_prescription FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
 );
@@ -145,7 +151,7 @@ CREATE TABLE refresh_tokens (
     expiry_date TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
--- 13. Audit Log Table (HIPAA/DPDP Clinical Accountability)
+-- 13. Audit Log Table
 CREATE TABLE audit_log (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT,
@@ -157,4 +163,28 @@ CREATE TABLE audit_log (
     summary TEXT,
     ip_address VARCHAR(100),
     timestamp TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. Medical Record Table (Clinical Depth)
+CREATE TABLE medical_record (
+    id BIGSERIAL PRIMARY KEY,
+    patient_id BIGINT NOT NULL REFERENCES patient(id) ON DELETE CASCADE,
+    doctor_id BIGINT NOT NULL REFERENCES doctor(id) ON DELETE CASCADE,
+    appointment_id BIGINT REFERENCES appointments(id) ON DELETE SET NULL,
+    diagnosis VARCHAR(255) NOT NULL,
+    symptoms TEXT,
+    vitals TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. Doctor Availability Table
+CREATE TABLE doctor_availability (
+    id BIGSERIAL PRIMARY KEY,
+    doctor_id BIGINT NOT NULL UNIQUE REFERENCES doctor(id) ON DELETE CASCADE,
+    working_days VARCHAR(500) DEFAULT 'Monday,Tuesday,Wednesday,Thursday,Friday',
+    start_time VARCHAR(10) DEFAULT '09:00',
+    end_time VARCHAR(10) DEFAULT '17:00',
+    slot_minutes INTEGER DEFAULT 30,
+    leave_dates VARCHAR(1000)
 );

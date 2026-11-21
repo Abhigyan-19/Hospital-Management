@@ -12,6 +12,7 @@ import com.hospital.management.repository.PatientRepository;
 import com.hospital.management.security.CustomUserDetails;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,17 +23,23 @@ public class AppointmentService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final SmsService smsService;
+    private final DoctorAvailabilityService doctorAvailabilityService;
+    private final AuditLogService auditLogService;
 
     public AppointmentService(
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
             DoctorRepository doctorRepository,
-            SmsService smsService) {
+            SmsService smsService,
+            DoctorAvailabilityService doctorAvailabilityService,
+            AuditLogService auditLogService) {
 
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.smsService = smsService;
+        this.doctorAvailabilityService = doctorAvailabilityService;
+        this.auditLogService = auditLogService;
     }
 
     public List<Appointment> getAllAppointments() {
@@ -56,6 +63,7 @@ public class AppointmentService {
         return List.of();
     }
 
+    @Transactional
     public Appointment createAppointment(AppointmentRequest request, CustomUserDetails userDetails) {
         if (userDetails != null && userDetails.getUser().getRole() == Role.PATIENT) {
             if (userDetails.getPatientId() == null || !userDetails.getPatientId().equals(request.getPatientId())) {
@@ -69,6 +77,10 @@ public class AppointmentService {
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + request.getDoctorId()));
 
+        // Check availability schedule (working hours and leave)
+        doctorAvailabilityService.validateDoctorAvailable(request.getDoctorId(), request.getDate(), request.getTime());
+
+        // Block double booking
         boolean slotBooked = appointmentRepository.existsByDoctorIdAndDateAndTimeAndStatusNot(
                 request.getDoctorId(),
                 request.getDate(),
@@ -90,7 +102,11 @@ public class AppointmentService {
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
 
-        // Dispatch Booking Confirmation SMS to Patient
+        // Audit log
+        auditLogService.recordLog(userDetails, "CREATE", "APPOINTMENT", String.valueOf(savedAppointment.getId()),
+                "Booked appointment #" + savedAppointment.getId() + " with Dr. " + doctor.getName() + " on " + savedAppointment.getDate() + " at " + savedAppointment.getTime());
+
+        // Dispatch Booking Confirmation SMS to Patient (non-blocking)
         smsService.sendAppointmentBookingSms(
                 patient,
                 doctor,
@@ -101,6 +117,62 @@ public class AppointmentService {
         return savedAppointment;
     }
 
+    @Transactional
+    public Appointment rescheduleAppointment(Long appointmentId, String newDate, String newTime, CustomUserDetails userDetails) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
+
+        if (userDetails != null) {
+            Role role = userDetails.getUser().getRole();
+            if (role == Role.PATIENT) {
+                if (userDetails.getPatientId() == null || !userDetails.getPatientId().equals(appointment.getPatient().getId())) {
+                    throw new AccessDeniedException("Patients can only reschedule their own appointments.");
+                }
+            } else if (role == Role.DOCTOR) {
+                if (userDetails.getDoctorId() == null || !userDetails.getDoctorId().equals(appointment.getDoctor().getId())) {
+                    throw new AccessDeniedException("Doctors can only reschedule their own appointments.");
+                }
+            }
+        }
+
+        String oldDate = appointment.getDate();
+        String oldTime = appointment.getTime();
+
+        // 1. Validate doctor availability for new slot
+        doctorAvailabilityService.validateDoctorAvailable(appointment.getDoctor().getId(), newDate, newTime);
+
+        // 2. Block double-booking for the target doctor and slot
+        boolean conflict = appointmentRepository.existsByDoctorIdAndDateAndTimeAndStatusNotAndIdNot(
+                appointment.getDoctor().getId(),
+                newDate,
+                newTime,
+                "Cancelled",
+                appointmentId
+        );
+
+        if (conflict) {
+            throw new IllegalArgumentException("Doctor is already booked for the requested slot: " + newDate + " at " + newTime);
+        }
+
+        appointment.setDate(newDate);
+        appointment.setTime(newTime);
+        if ("Cancelled".equalsIgnoreCase(appointment.getStatus())) {
+            appointment.setStatus("Scheduled");
+        }
+
+        Appointment saved = appointmentRepository.save(appointment);
+
+        // Audit log
+        auditLogService.recordLog(userDetails, "RESCHEDULE", "APPOINTMENT", String.valueOf(saved.getId()),
+                "Rescheduled appointment #" + saved.getId() + " from " + oldDate + " " + oldTime + " to " + newDate + " " + newTime);
+
+        // Dispatch Reschedule SMS (non-blocking)
+        smsService.sendAppointmentRescheduledSms(saved.getPatient(), saved.getDoctor(), oldDate, newDate, newTime);
+
+        return saved;
+    }
+
+    @Transactional
     public Appointment updateStatus(Long id, String status, CustomUserDetails userDetails) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
@@ -144,12 +216,23 @@ public class AppointmentService {
 
         Appointment updated = appointmentRepository.save(appointment);
 
-        // If appointment completed, send completion SMS
+        // Audit log
+        auditLogService.recordLog(userDetails, "STATUS_UPDATE", "APPOINTMENT", String.valueOf(updated.getId()),
+                "Updated appointment #" + updated.getId() + " status to " + updated.getStatus());
+
+        // Non-blocking SMS dispatch
         if ("completed".equalsIgnoreCase(normalizedStatus)) {
             smsService.sendAppointmentCompletedSms(
                     updated.getPatient(),
                     updated.getDoctor(),
                     updated.getDate()
+            );
+        } else if ("cancelled".equalsIgnoreCase(normalizedStatus)) {
+            smsService.sendAppointmentCancelledSms(
+                    updated.getPatient(),
+                    updated.getDoctor(),
+                    updated.getDate(),
+                    updated.getTime()
             );
         }
 

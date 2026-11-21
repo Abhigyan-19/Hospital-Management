@@ -16,6 +16,9 @@ public class Patient {
     private int age;
     private String gender;
     private String phone;
+    private String bloodGroup;
+    private String allergies;
+    private String emergencyContact;
 
     public Patient() {
     }
@@ -27,8 +30,21 @@ public class Patient {
         this.phone = phone;
     }
 
+    public Patient(String name, int age, String gender, String phone, String bloodGroup, String allergies) {
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.phone = phone;
+        this.bloodGroup = bloodGroup;
+        this.allergies = allergies;
+    }
+
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -61,5 +77,29 @@ public class Patient {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getBloodGroup() {
+        return bloodGroup;
+    }
+
+    public void setBloodGroup(String bloodGroup) {
+        this.bloodGroup = bloodGroup;
+    }
+
+    public String getAllergies() {
+        return allergies;
+    }
+
+    public void setAllergies(String allergies) {
+        this.allergies = allergies;
+    }
+
+    public String getEmergencyContact() {
+        return emergencyContact;
+    }
+
+    public void setEmergencyContact(String emergencyContact) {
+        this.emergencyContact = emergencyContact;
     }
 }

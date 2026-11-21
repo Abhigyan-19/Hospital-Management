@@ -19,6 +19,9 @@ public class PrescriptionMedicine {
 
     private String duration;
 
+    @Column(name = "patient_instructions", length = 500)
+    private String patientInstructions;
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "prescription_id", nullable = false)
@@ -37,6 +40,20 @@ public class PrescriptionMedicine {
         this.dosage = dosage;
         this.frequency = frequency;
         this.duration = duration;
+    }
+
+    public PrescriptionMedicine(
+            String name,
+            String dosage,
+            String frequency,
+            String duration,
+            String patientInstructions
+    ) {
+        this.name = name;
+        this.dosage = dosage;
+        this.frequency = frequency;
+        this.duration = duration;
+        this.patientInstructions = patientInstructions;
     }
 
     public Long getId() {
@@ -75,6 +92,14 @@ public class PrescriptionMedicine {
         this.duration = duration;
     }
 
+    public String getPatientInstructions() {
+        return patientInstructions;
+    }
+
+    public void setPatientInstructions(String patientInstructions) {
+        this.patientInstructions = patientInstructions;
+    }
+
     public Prescription getPrescription() {
         return prescription;
     }
@@ -83,4 +108,3 @@ public class PrescriptionMedicine {
         this.prescription = prescription;
     }
 }
-

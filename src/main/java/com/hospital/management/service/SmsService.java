@@ -72,6 +72,24 @@ public class SmsService {
         dispatchSms(patient, "APPOINTMENT_COMPLETED", message);
     }
 
+    public void sendAppointmentCancelledSms(Patient patient, Doctor doctor, String date, String time) {
+        if (patient == null) return;
+        String message = String.format(
+                "Hello %s, your appointment with Dr. %s scheduled for %s at %s has been CANCELLED. For rebooking or queries, call %s. - Sebasethu Hospital",
+                patient.getName(), doctor != null ? doctor.getName() : "your doctor", date, time, hospitalSenderPhone
+        );
+        dispatchSms(patient, "APPOINTMENT_CANCELLED", message);
+    }
+
+    public void sendAppointmentRescheduledSms(Patient patient, Doctor doctor, String oldDate, String newDate, String newTime) {
+        if (patient == null) return;
+        String message = String.format(
+                "Hello %s, your appointment with Dr. %s has been RESCHEDULED to %s at %s. Helpline: %s - Sebasethu Hospital",
+                patient.getName(), doctor != null ? doctor.getName() : "your doctor", newDate, newTime, hospitalSenderPhone
+        );
+        dispatchSms(patient, "APPOINTMENT_RESCHEDULED", message);
+    }
+
     public void sendBedAssignedSms(Patient patient, String wardName, String bedNumber) {
         if (patient == null) return;
         String message = String.format(

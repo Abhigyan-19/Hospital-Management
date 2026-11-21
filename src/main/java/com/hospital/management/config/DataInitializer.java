@@ -1,12 +1,7 @@
 package com.hospital.management.config;
 
-import com.hospital.management.entity.Doctor;
-import com.hospital.management.entity.Patient;
-import com.hospital.management.entity.Role;
-import com.hospital.management.entity.User;
-import com.hospital.management.repository.DoctorRepository;
-import com.hospital.management.repository.PatientRepository;
-import com.hospital.management.repository.UserRepository;
+import com.hospital.management.entity.*;
+import com.hospital.management.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +16,64 @@ public class DataInitializer {
     public CommandLineRunner initUsers(UserRepository userRepository,
                                        DoctorRepository doctorRepository,
                                        PatientRepository patientRepository,
+                                       DoctorAvailabilityRepository availabilityRepository,
+                                       MedicalRecordRepository medicalRecordRepository,
                                        PasswordEncoder passwordEncoder) {
         return args -> {
+            // Seed sample patient if none
+            List<Patient> patients = patientRepository.findAll();
+            Patient samplePatient;
+            if (!patients.isEmpty()) {
+                samplePatient = patients.get(0);
+                if (samplePatient.getBloodGroup() == null) {
+                    samplePatient.setBloodGroup("O+");
+                    samplePatient.setAllergies("Penicillin");
+                    samplePatient.setEmergencyContact("+91 9876500000");
+                    patientRepository.save(samplePatient);
+                }
+            } else {
+                samplePatient = new Patient("Maya Iyer", 28, "Female", "+91 9876543210", "O+", "Penicillin");
+                samplePatient.setEmergencyContact("+91 9876500000");
+                samplePatient = patientRepository.save(samplePatient);
+            }
+
+            // Seed sample doctor if none
+            List<Doctor> doctors = doctorRepository.findAll();
+            Doctor sampleDoctor;
+            if (!doctors.isEmpty()) {
+                sampleDoctor = doctors.get(0);
+            } else {
+                sampleDoctor = doctorRepository.save(new Doctor("Dr. Anika Sharma", "Cardiology", 10));
+            }
+
+            // Seed doctor availability if none
+            if (availabilityRepository.findByDoctor_Id(sampleDoctor.getId()).isEmpty()) {
+                DoctorAvailability availability = new DoctorAvailability(
+                        sampleDoctor,
+                        "Monday,Tuesday,Wednesday,Thursday,Friday",
+                        "09:00",
+                        "17:00",
+                        30,
+                        ""
+                );
+                availabilityRepository.save(availability);
+            }
+
+            // Seed initial medical record if none
+            if (medicalRecordRepository.count() == 0) {
+                MedicalRecord record = new MedicalRecord(
+                        samplePatient,
+                        sampleDoctor,
+                        null,
+                        "Mild hypertension",
+                        "Occasional headaches and elevated resting systolic blood pressure",
+                        "BP: 135/85 mmHg, Pulse: 74 bpm, Temp: 98.4 F",
+                        "Recommended lifestyle modification, reduced sodium intake, and 30 minutes daily aerobic exercise."
+                );
+                medicalRecordRepository.save(record);
+            }
+
+            // Seed default users if table empty
             if (userRepository.count() == 0) {
                 String defaultPassword = passwordEncoder.encode("demo123");
 
@@ -32,26 +83,12 @@ public class DataInitializer {
                 userRepository.save(admin);
 
                 // 2. Doctor
-                List<Doctor> doctors = doctorRepository.findAll();
-                Doctor sampleDoctor;
-                if (!doctors.isEmpty()) {
-                    sampleDoctor = doctors.get(0);
-                } else {
-                    sampleDoctor = doctorRepository.save(new Doctor("Dr. Anika Sharma", "Cardiology", 10));
-                }
                 User doctorUser = new User("doctor@sebasethu.health", defaultPassword, sampleDoctor.getName(), Role.DOCTOR);
                 doctorUser.setDoctorId(sampleDoctor.getId());
                 doctorUser.setApprovalStatus("APPROVED");
                 userRepository.save(doctorUser);
 
                 // 3. Patient
-                List<Patient> patients = patientRepository.findAll();
-                Patient samplePatient;
-                if (!patients.isEmpty()) {
-                    samplePatient = patients.get(0);
-                } else {
-                    samplePatient = patientRepository.save(new Patient("Maya Iyer", 28, "Female", "+91 9876543210"));
-                }
                 User patientUser = new User("patient@sebasethu.health", defaultPassword, samplePatient.getName(), Role.PATIENT);
                 patientUser.setPatientId(samplePatient.getId());
                 patientUser.setApprovalStatus("APPROVED");
