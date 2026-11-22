@@ -1,6 +1,7 @@
 package com.hospital.management.appointment.controller;
 
 import com.hospital.management.appointment.dto.AppointmentHistoryResponse;
+import com.hospital.management.appointment.dto.AppointmentQueueEntryResponse;
 import com.hospital.management.appointment.dto.AppointmentRequest;
 import com.hospital.management.appointment.dto.AppointmentResponse;
 import com.hospital.management.appointment.dto.RescheduleRequest;
@@ -40,6 +41,14 @@ public class AppointmentController {
     @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR')")
     public List<AppointmentResponse> getMyAppointments(@AuthenticationPrincipal AuthenticatedUser user) {
         return appointmentService.listMine(user);
+    }
+
+    @GetMapping("/queue")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
+    public List<AppointmentQueueEntryResponse> getQueue(
+            @RequestParam(required = false) Long doctorId,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return appointmentService.getQueue(user, doctorId);
     }
 
     @PostMapping

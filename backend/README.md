@@ -1107,7 +1107,10 @@ Supported operations include:
 GET  /appointments
 POST /appointments
 PUT  /appointments/{id}/status
+GET  /appointments/queue?doctorId={doctorId}
 ```
+
+Receptionists and admins can retrieve a doctor's current queue by `doctorId`; doctors can retrieve their own queue without that parameter. The receptionist check-in endpoint (`POST /reception/appointments/{id}/check-in`) registers an eligible appointment in the queue. Queue entries are ordered by check-in time and include their current position. Only today's checked-in, active appointments are returned.
 
 The controller delegates appointment operations to `AppointmentService`.
 

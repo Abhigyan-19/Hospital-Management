@@ -34,6 +34,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -200,6 +201,40 @@ class AppointmentWorkflowIntegrationTest {
                         .header("Authorization", bearer(patientAccount)))
                 .andExpect(status().isForbidden());
         assertEquals(AppointmentStatus.PENDING, appointmentRepository.findById(appointmentId).orElseThrow().getStatus());
+    }
+
+    @Test
+    void receptionistCheckInRegistersAppointmentInDoctorQueueByArrivalOrder() throws Exception {
+        LocalDate today = LocalDate.now();
+        Appointment waiting = appointmentRepository.saveAndFlush(new Appointment(
+                patient, doctor, today, LocalTime.of(10, 0), AppointmentStatus.SCHEDULED, 30, receptionist, null));
+        waiting.setCheckedInAt(java.time.LocalDateTime.now().minusMinutes(2));
+        appointmentRepository.saveAndFlush(waiting);
+        Appointment arriving = appointmentRepository.saveAndFlush(new Appointment(
+                patient, doctor, today, LocalTime.of(10, 30), AppointmentStatus.SCHEDULED, 30, receptionist, null));
+        Appointment notCheckedIn = appointmentRepository.saveAndFlush(new Appointment(
+                patient, doctor, today, LocalTime.of(11, 0), AppointmentStatus.SCHEDULED, 30, receptionist, null));
+
+        mockMvc.perform(post("/reception/appointments/{id}/check-in", arriving.getId())
+                        .header("Authorization", bearer(receptionist)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("Checked In")));
+
+        mockMvc.perform(get("/appointments/queue")
+                        .header("Authorization", bearer(doctorAccount)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()", is(2)))
+                .andExpect(jsonPath("$[0].position", is(1)))
+                .andExpect(jsonPath("$[0].appointment.id", is(waiting.getId().intValue())))
+                .andExpect(jsonPath("$[1].position", is(2)))
+                .andExpect(jsonPath("$[1].appointment.id", is(arriving.getId().intValue())));
+
+        mockMvc.perform(get("/appointments/queue")
+                        .param("doctorId", Long.toString(doctor.getId() + 1))
+                        .header("Authorization", bearer(doctorAccount)))
+                .andExpect(status().isForbidden());
+
+        assertNull(appointmentRepository.findById(notCheckedIn.getId()).orElseThrow().getCheckedInAt());
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.hospital.management.appointment.service;
 
 import com.hospital.management.appointment.dto.AppointmentRequest;
 import com.hospital.management.appointment.dto.AppointmentHistoryResponse;
+import com.hospital.management.appointment.dto.AppointmentQueueEntryResponse;
 import com.hospital.management.appointment.dto.AppointmentResponse;
 import com.hospital.management.appointment.dto.RescheduleRequest;
 import com.hospital.management.appointment.entity.Appointment;
@@ -30,6 +31,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -90,6 +92,40 @@ public class AppointmentService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only patients and doctors can retrieve personal appointments.");
         }
         return appointments.stream().map(appointment -> toResponse(appointment, false)).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentQueueEntryResponse> getQueue(AuthenticatedUser user, Long requestedDoctorId) {
+        Long doctorId;
+        if (user.role() == UserRole.DOCTOR) {
+            Doctor doctor = doctorRepository.findByAccount_Id(user.id())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.FORBIDDEN, "This account is not linked to a doctor profile."));
+            if (requestedDoctorId != null && !requestedDoctorId.equals(doctor.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Doctors can only view their own queue.");
+            }
+            doctorId = doctor.getId();
+        } else {
+            requireStaff(user.role());
+            if (requestedDoctorId == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "doctorId is required to retrieve a queue.");
+            }
+            if (!doctorRepository.existsById(requestedDoctorId)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found.");
+            }
+            doctorId = requestedDoctorId;
+        }
+
+        List<Appointment> appointments = appointmentRepository
+                .findByDoctor_IdAndDateAndCheckedInAtIsNotNullAndStatusInOrderByCheckedInAtAscIdAsc(
+                        doctorId,
+                        LocalDate.now(),
+                        List.of(AppointmentStatus.APPROVED, AppointmentStatus.SCHEDULED));
+        List<AppointmentQueueEntryResponse> queue = new ArrayList<>(appointments.size());
+        for (int i = 0; i < appointments.size(); i++) {
+            queue.add(new AppointmentQueueEntryResponse(i + 1, toResponse(appointments.get(i), true)));
+        }
+        return List.copyOf(queue);
     }
 
     @Transactional

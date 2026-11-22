@@ -17,6 +17,31 @@ export const appointmentService = {
             ? Promise.resolve(demoListAppointments())
             : api.get('/appointments').then(({ data }) => data),
 
+    queue: (doctorId) => {
+        if (!isDemoMode()) {
+            return api.get('/appointments/queue', { params: { doctorId } }).then(({ data }) => data);
+        }
+
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const today = now.toISOString().slice(0, 10);
+        const appointments = demoListAppointments()
+            .filter((appointment) =>
+                Number(appointment.doctor?.id) === Number(doctorId) &&
+                appointment.date === today &&
+                appointment.status === 'Checked In' &&
+                appointment.checkedInAt,
+            )
+            .sort((left, right) =>
+                left.checkedInAt.localeCompare(right.checkedInAt) || Number(left.id) - Number(right.id),
+            );
+
+        return Promise.resolve(appointments.map((appointment, index) => ({
+            position: index + 1,
+            appointment,
+        })));
+    },
+
     listMine: () =>
         isDemoMode()
             ? Promise.resolve(demoListAppointments())

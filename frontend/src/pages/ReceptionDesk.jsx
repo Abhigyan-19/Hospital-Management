@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Plus, UserPlus } from 'lucide-react';
+import { CalendarDays, Plus, RefreshCw, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { appointmentService } from '../api/appointmentService';
 import { doctorService } from '../api/doctorService';
@@ -22,6 +22,11 @@ export default function ReceptionDesk() {
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [queueDoctorId, setQueueDoctorId] = useState('');
+  const [queueEntries, setQueueEntries] = useState([]);
+  const [queueLoading, setQueueLoading] = useState(false);
+  const [queueError, setQueueError] = useState('');
+  const [queueRefresh, setQueueRefresh] = useState(0);
   const [search, setSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -44,6 +49,7 @@ export default function ReceptionDesk() {
         setAppointments(appointmentData);
         setPatients(patientData);
         setDoctors(doctorData);
+        setQueueDoctorId(doctorData[0] ? String(doctorData[0].id) : '');
       })
       .catch((requestError) => {
         const message = apiErrorMessage(requestError, 'Reception appointments, patients, and doctors could not be loaded.');
@@ -52,6 +58,35 @@ export default function ReceptionDesk() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!queueDoctorId) {
+      setQueueEntries([]);
+      setQueueError('');
+      return undefined;
+    }
+
+    let active = true;
+    setQueueLoading(true);
+    setQueueError('');
+    appointmentService.queue(Number(queueDoctorId))
+      .then((entries) => {
+        if (active) setQueueEntries(entries);
+      })
+      .catch((requestError) => {
+        if (!active) return;
+        const message = apiErrorMessage(requestError, "Today's patient queue could not be loaded.");
+        setQueueError(message);
+        toast.error(message);
+      })
+      .finally(() => {
+        if (active) setQueueLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [queueDoctorId, queueRefresh]);
 
   const departments = useMemo(() =>
     [...new Set(doctors.map((doctor) => doctor.specialization || doctor.department?.name).filter(Boolean))].sort(),
@@ -132,6 +167,8 @@ export default function ReceptionDesk() {
     try {
       const updated = await appointmentService.checkIn(appointment.id);
       setAppointments((current) => current.map((item) => Number(item.id) === Number(updated.id) ? updated : item));
+      setQueueDoctorId(String(updated.doctor.id));
+      setQueueRefresh((current) => current + 1);
       toast.success(`${appointment.patient?.name || 'Patient'} checked in.`);
     } catch (requestError) {
       toast.error(apiErrorMessage(requestError, 'Patient check-in is not available.'));
@@ -192,6 +229,58 @@ export default function ReceptionDesk() {
       <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="font-bold text-teal-700">Reception workspace</p><h2 className="mt-1 text-3xl font-black text-ink sm:text-4xl">Walk-ins and appointment queue</h2><p className="mt-2 text-navy-700">Register arriving patients, manage bookings, and check in today's appointments.</p></div><div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => setPatientOpen(true)}><UserPlus size={18} />Register walk-in</Button><Button onClick={() => setBookingOpen(true)}><Plus size={18} />Book for a patient</Button></div></header>
       {error && <Card className="border-red-200 bg-red-50"><p className="font-bold text-danger">Reception data could not be loaded</p><p className="mt-1 text-navy-700">{error}</p></Card>}
       <div className="grid gap-4 sm:grid-cols-3"><Card><p className="font-bold text-navy-700">Today's appointments</p><p className="mt-2 text-3xl font-black">{appointments.filter((item) => item.date === today).length}</p></Card><Card><p className="font-bold text-navy-700">Waiting for check-in</p><p className="mt-2 text-3xl font-black">{appointments.filter((item) => item.date === today && ['Scheduled', 'Confirmed'].includes(item.status)).length}</p></Card><Card><p className="font-bold text-navy-700">Pending review</p><p className="mt-2 text-3xl font-black">{appointments.filter((item) => item.status === 'Pending').length}</p></Card></div>
+      <Card>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-extrabold">Checked-in patient queue</h3>
+            <p className="mt-1 text-sm text-navy-700">Patients are shown in the order they checked in today.</p>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="block min-w-56">
+              <span className="mb-2 block font-bold">Doctor</span>
+              <select
+                className="min-h-11 w-full rounded-lg border border-navy-100 bg-white px-3"
+                value={queueDoctorId}
+                onChange={(event) => setQueueDoctorId(event.target.value)}
+                disabled={!doctors.length}
+              >
+                {doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
+                ))}
+              </select>
+            </label>
+            <Button
+              variant="secondary"
+              onClick={() => setQueueRefresh((current) => current + 1)}
+              disabled={!queueDoctorId || queueLoading}
+            >
+              <RefreshCw size={17} />Refresh
+            </Button>
+          </div>
+        </div>
+        {queueError ? (
+          <p className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-danger">{queueError}</p>
+        ) : queueLoading ? (
+          <p className="mt-5 text-navy-700">Loading today's patient queue...</p>
+        ) : !queueEntries.length ? (
+          <div className="mt-5">
+            <EmptyState title="No patients checked in yet">Check in today's appointment to add the patient to this queue.</EmptyState>
+          </div>
+        ) : (
+          <ol className="mt-5 space-y-3">
+            {queueEntries.map(({ position, appointment }) => (
+              <li key={appointment.id} className="flex items-center gap-4 rounded-xl border border-navy-100 p-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-teal-50 font-black text-teal-700">{position}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-extrabold">{appointment.patient?.name || 'Patient'}</p>
+                  <p className="mt-1 text-sm text-navy-700">{appointment.time} · {appointment.doctor?.name || 'Doctor'}</p>
+                </div>
+                <Badge tone="success">Checked in</Badge>
+              </li>
+            ))}
+          </ol>
+        )}
+      </Card>
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-navy-100 pb-5"><div><h3 className="text-xl font-extrabold">{showAll ? 'All appointments' : "Today's appointment queue"}</h3><button className="mt-2 min-h-11 font-bold text-teal-700 underline" onClick={() => setShowAll((current) => !current)}>{showAll ? "Show today's queue" : 'View all appointment dates'}</button></div><div className="w-full sm:max-w-sm"><SearchBox value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search patient or doctor" /></div></div>
         {loading ? <p className="py-6 text-navy-700">Loading the reception queue...</p> : !visibleAppointments.length ? <div className="py-6"><EmptyState title={search ? 'No matching appointments' : showAll ? 'No appointments' : 'No appointments today'}>{search ? 'Try another patient or doctor name.' : 'Register a walk-in patient or book an appointment for a future visit.'}</EmptyState></div> : (
